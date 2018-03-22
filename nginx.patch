@@ -1,0 +1,157 @@
+diff -ur nginx-1.8.0/src/http/ngx_http_request.c src/nginx/src/http/ngx_http_request.c
+--- nginx-1.8.0/src/http/ngx_http_request.c	2015-04-21 15:12:01.000000000 +0100
++++ src/nginx/src/http/ngx_http_request.c	2016-03-03 18:07:20.000000000 +0000
+@@ -2347,7 +2347,17 @@
+     }
+
+     if (r != r->main) {
++        int request_deleted = 0;
+
++
++        if ( r->websocket_subrequest == 1 ) {
++            // Hammering to force the subrequest to be deleted bellow
++            if ( r->postponed && r->postponed->request == NULL ) {
++                r->postponed = NULL;
++                c->data      = r;
++            }
++        }
++
+         if (r->buffered || r->postponed) {
+
+             if (ngx_http_set_write_handler(r) != NGX_OK) {
+@@ -2381,10 +2391,39 @@
+
+             r->done = 1;
+
+-            if (pr->postponed && pr->postponed->request == r) {
+-                pr->postponed = pr->postponed->next;
++            ngx_http_postponed_request_t* previous, *current;
++
++            previous = current = pr->postponed;
++
++            while ( current ) {
++
++                if( current->request == r ) {
++
++                    previous->next = current->next;
++                    ngx_pfree(r->main->pool, current);
++                    current = previous->next;
++
++                    if ( request_deleted == 0 && r->websocket_subrequest == 1 ) {
++
++                        request_deleted = 1;
++                        ngx_http_cleanup_t* cln = r->cleanup;
++                        r->cleanup = NULL;
++
++                        while (cln) {
++                            if (cln->handler) {
++                                cln->handler(cln->data);
++                            }
++                            cln = cln->next;
++                        }
++                        ngx_pfree(r->main->pool, r);
++                    }
++
++                } else {
++
++                    previous = current;
++                    current  = current->next;
++                }
+             }
+-
+             c->data = pr;
+
+         } else {
+@@ -2399,10 +2438,12 @@
+                 r->done = 1;
+             }
+         }
+-
++
+         if (ngx_http_post_request(pr, NULL) != NGX_OK) {
+-            r->main->count++;
+-            ngx_http_terminate_request(r, 0);
++            if ( request_deleted == 0 ) {
++                r->main->count++;
++                ngx_http_terminate_request(r, 0);
++            }
+             return;
+         }
+
+@@ -2429,6 +2470,14 @@
+         return;
+     }
+
++    if ( 1 == r->websocket_request && NGX_OK == rc) {
++        if (c->write->timer_set) {
++            c->write->delayed = 0;
++            ngx_del_timer(c->write);
++        }
++        return;
++    }
++
+     r->done = 1;
+     r->write_event_handler = ngx_http_request_empty_handler;
+
+@@ -3509,7 +3558,6 @@
+
+     pool = r->pool;
+     r->pool = NULL;
+-
+     ngx_destroy_pool(pool);
+ }
+
+diff -ur src/nginx/src/http/ngx_http_request.h.orig src/nginx/src/http/ngx_http_request.h 
+--- src/nginx/src/http/ngx_http_request.h.orig  2017-04-25 15:18:23.000000000 +0100
++++ src/nginx/src/http/ngx_http_request.h   2017-05-04 09:24:44.000000000 +0100
+@@ -509,6 +509,9 @@
+     unsigned                          cacheable:1;
+ #endif
+ 
++    unsigned                          websocket_request:1;
++    unsigned                          websocket_subrequest:1;
++
+     unsigned                          pipeline:1;
+     unsigned                          chunked:1;
+     unsigned                          header_only:1;
+
+diff -ur src/nginx/src/os/unix/ngx_process.c.orig src/nginx/src/os/unix/ngx_process.c
+--- src/nginx/src/os/unix/ngx_process.c.orig    2017-05-04 09:11:52.000000000 +0100
++++ src/nginx/src/os/unix/ngx_process.c 2017-05-04 09:13:44.000000000 +0100
+@@ -313,6 +313,7 @@
+     return NGX_OK;
+ }
+ 
++extern void ngx_websocket_signal_handler (int a_sig_no);
+ 
+ static void
+ ngx_signal_handler(int signo, siginfo_t *siginfo, void *ucontext)
+@@ -322,6 +323,8 @@
+     ngx_err_t        err;
+     ngx_signal_t    *sig;
+ 
++   ngx_websocket_signal_handler(signo);
++
+     ignore = 0;
+ 
+     err = ngx_errno;
+
+--- ./src/nginx/src/core/nginx.c.orig	2016-09-27 14:32:50.000000000 +0100
++++ ./src/nginx/src/core/nginx.c	2016-09-30 15:02:51.000000000 +0100
+@@ -190,6 +190,7 @@
+ 
+ static char **ngx_os_environ;
+ 
++extern void ngx_websocket_main_hook (const ngx_core_conf_t* a_config);
+ 
+ int ngx_cdecl
+ main(int argc, char *const *argv)
+@@ -368,6 +369,8 @@
+ 
+     ngx_use_stderr = 0;
+ 
++    ngx_websocket_main_hook(ccf);
++
+     if (ngx_process == NGX_PROCESS_SINGLE) {
+         ngx_single_process_cycle(cycle);
+ 

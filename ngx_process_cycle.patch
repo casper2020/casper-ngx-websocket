@@ -1,0 +1,19 @@
+--- src/nginx/src/os/unix/ngx_process_cycle.c.orig	2017-01-31 11:30:40.000000000 +0000
++++ src/nginx/src/os/unix/ngx_process_cycle.c	2017-01-31 11:33:11.000000000 +0000
+@@ -775,6 +775,7 @@
+     }
+ }
+ 
++extern void ngx_websocket_worker_hook (const ngx_core_conf_t* a_config);
+ 
+ static void
+ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
+@@ -938,6 +939,8 @@
+         /* fatal */
+         exit(2);
+     }
++
++    ngx_websocket_worker_hook(ccf);
+ }
+ 
+ 
