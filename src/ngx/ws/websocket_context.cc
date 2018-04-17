@@ -46,6 +46,5 @@ ngx::ws::Context::Context (ngx_module_t& a_module, ngx_http_request_t* a_http_re
  */
 ngx::ws::Context::~Context ()
 {
-    // TMP: disabled while searching for crash
-    // delete client_;
+    delete client_;
 }
