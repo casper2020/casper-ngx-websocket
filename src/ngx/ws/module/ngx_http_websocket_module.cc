@@ -749,7 +749,7 @@ static void ngx_http_websocket_module_read_handler (ngx_http_request_t* a_r)
             consumed_bytes += decoded_bytes;
             buffer_ptr      = buffer + consumed_bytes;
             // no more frames
-            if ( 0 == decoding_remaining_bytes ) {
+            if ( decoding_remaining_bytes <= 0 ) {
                 break;
             }
         }

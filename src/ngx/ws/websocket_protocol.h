@@ -701,7 +701,7 @@ namespace ngx
                         break;
                     default:
                         // ... caller must handle with this error ...
-                        return -1;
+                        return false;
                 }
 
                 // mark as fragmented or not
@@ -816,7 +816,7 @@ namespace ngx
                     current_frame_->payload_buffer_.Alloc(real_payload_length);
                 } catch (...) {
                     // ... caller must handle with this error ...
-                    return -1;
+                    return false;
                 }
                 //
                 // extract masking key
