@@ -26,6 +26,7 @@
 
 // public static data
 const char* ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_       = "sec-websocket-protocol";
+const char* ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_    = "remote-ip";
 const char* ngx::ws::AbstractWebsocketClient::k_websocket_resources_root_key_lc_        = "resources-root";
 const char* ngx::ws::AbstractWebsocketClient::k_websocket_logs_root_key_lc_             = "logs-root";
 const char* ngx::ws::AbstractWebsocketClient::k_websocket_http_file_server_host_key_lc_ = "http_file_server_host";

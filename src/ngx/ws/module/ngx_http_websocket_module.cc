@@ -45,7 +45,7 @@ static void                 ngx_http_websocket_module_timer_handler      (ngx_ev
 
 static void                 ngx_http_websocket_module_cleanup_handler    (void*);
 static ngx::ws::NGXContext* ngx_http_websocket_module_context_setup      (ngx_http_request_t* a_r,
-                                                                          const std::string& a_protocol,
+                                                                          const std::string& a_protocol, const std::string& a_remote_ip,
                                                                           const ngx_http_websocket_module_loc_conf_t* a_loc_conf);
 static ngx_int_t            ngx_http_websocket_module_handshake          (ngx_http_request_t* a_r, const std::string& a_protocol, std::map<std::string, std::string>& a_in_headers);
 
@@ -449,6 +449,7 @@ ngx_int_t ngx_http_websocket_module_content_handler (ngx_http_request_t* a_r)
     std::map<std::string, std::string>           in_headers;
     std::map<std::string, std::string>::iterator in_headers_it;
     std::string                                  protocol_hv;
+    std::string                                  remote_ip;
     ngx::ws::NGXContext*                         context = NULL;
     ngx_http_cleanup_t*                          cleanup = NULL;
     // load received headers
@@ -472,8 +473,11 @@ ngx_int_t ngx_http_websocket_module_content_handler (ngx_http_request_t* a_r)
     }
     in_headers_it = in_headers.find(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_);
     protocol_hv   = in_headers_it != in_headers.end() ? in_headers_it->second : "";
+    
+    in_headers_it = in_headers.find("x-remote-ip");
+    remote_ip     = in_headers_it != in_headers.end() ? in_headers_it->second : "";
     //
-    context       = ngx_http_websocket_module_context_setup(a_r, protocol_hv, loc_conf);
+    context       = ngx_http_websocket_module_context_setup(a_r, protocol_hv, remote_ip, loc_conf);
     if ( NULL == context ) {
         rc = NGX_ERROR;
         goto leave;
@@ -1095,14 +1099,16 @@ static void ngx_http_websocket_module_cleanup_handler (void* a_data)
 /*
  * @brief Creates a C++ context for an HTTP connection.
  *
- * @param a_r        The nginx http request.
- * @param a_protocol The client protocol list ( ',' separated ).
- * @param a_loc_conf Pointer to the module local configuration.
+ * @param a_r         The nginx http request.
+ * @param a_protocol  The client protocol list ( ',' separated ).
+ * @param a_remote_ip The remote ip.
+ * @param a_loc_conf  Pointer to the module local configuration.
  *
  * @return A new instance of a \link ngx::ws::NGXContext \link.
  */
 ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t* a_r,
                                                               const std::string& a_protocol,
+                                                              const std::string& a_remote_ip,
                                                               const ngx_http_websocket_module_loc_conf_t* a_loc_conf)
 {
     ngx::ws::NGXWriter*               writer                 = NULL;
@@ -1131,6 +1137,7 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         std::map<std::string, std::string> config_map;
         // add protocol
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_, a_protocol));
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_, a_remote_ip));
         // add resources path
         std::string resources_path;
         if ( a_loc_conf->resources_root.len > 0 ) {

@@ -52,6 +52,7 @@ namespace ngx
         public: // Static Data
 
             static const char*     k_websocket_protocol_header_key_lc_;
+            static const char*     k_websocket_protocol_remote_ip_key_lc_;
             static const char*     k_websocket_resources_root_key_lc_;
             static const char*     k_websocket_logs_root_key_lc_;
             static const char*     k_websocket_http_file_server_host_key_lc_;
