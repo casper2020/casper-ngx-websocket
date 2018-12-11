@@ -52,6 +52,7 @@ const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_host_key_lc_         
 const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_port_key_lc_                 = "beanstalkd_port";
 const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_              = "beanstalkd_timeout";
 const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_    = "beanstalkd_sessionless_tubes";
+const char* ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_          = "logger_register_tokens";
 
 #ifdef __APPLE__
 #pragma mark - AbstractWebsocketClient: Registry

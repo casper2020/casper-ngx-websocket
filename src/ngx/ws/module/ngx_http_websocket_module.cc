@@ -268,6 +268,14 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_sessionless_tubes),
         NULL
     },
+    {
+        ngx_string("nginx_websocket_logger_register_tokens"),               /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, logger_register_tokens),
+        NULL
+    },
     ngx_null_command
 };
 
@@ -351,6 +359,8 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->beanstalkd_timeout              = NGX_CONF_UNSET;
     conf->beanstalkd_sessionless_tubes.len  = 0;
     conf->beanstalkd_sessionless_tubes.data = NULL;
+    conf->logger_register_tokens.len        = 0;
+    conf->logger_register_tokens.data       = NULL;
     return conf;
 }
 
@@ -385,6 +395,7 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_value     (conf->beanstalkd_port                , prev->beanstalkd_port                ,       11300 );
     ngx_conf_merge_value     (conf->beanstalkd_timeout             , prev->beanstalkd_timeout             ,           0 );
     ngx_conf_merge_str_value (conf->beanstalkd_sessionless_tubes   , prev->beanstalkd_sessionless_tubes   ,          "" );
+    ngx_conf_merge_str_value (conf->logger_register_tokens         , prev->logger_register_tokens         ,        "[]" );
     return (char*) NGX_CONF_OK;
 }
 
@@ -1228,6 +1239,13 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
             config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_,
                                               std::string(reinterpret_cast<char const*>(a_loc_conf->beanstalkd_sessionless_tubes.data), a_loc_conf->beanstalkd_sessionless_tubes.len)
                                )
+            );
+        }
+        
+        if ( a_loc_conf->logger_register_tokens.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->logger_register_tokens.data), a_loc_conf->logger_register_tokens.len)
+                              )
             );
         }
 
