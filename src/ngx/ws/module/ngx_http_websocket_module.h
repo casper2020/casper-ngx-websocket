@@ -68,6 +68,7 @@ typedef struct {
     ngx_int_t  beanstalkd_timeout;              //!<
     ngx_str_t  beanstalkd_sessionless_tubes;    //!<
     ngx_str_t  logger_register_tokens;          //!<
+    ngx_str_t  data_source_overridable_sys_vars; //!<
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;

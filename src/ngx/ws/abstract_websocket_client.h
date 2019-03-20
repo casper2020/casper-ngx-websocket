@@ -76,6 +76,7 @@ namespace ngx
             static const char*     k_beanstalkd_timeout_key_lc_;
             static const char*     k_beanstalkd_sessionless_tubes_key_lc_;
             static const char*     k_logger_register_tokens_key_lc_;
+            static const char*     k_data_source_overridable_sys_vars_lc_;
 
         protected: // Data
 
