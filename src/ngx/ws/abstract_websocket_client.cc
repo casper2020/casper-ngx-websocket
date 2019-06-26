@@ -42,6 +42,7 @@ const char* ngx::ws::AbstractWebsocketClient::k_postgresql_post_connect_queries_
 const char* ngx::ws::AbstractWebsocketClient::k_postgresql_max_conn_per_worker_lc_      = "postgresql_max_conn_per_worker";
 const char* ngx::ws::AbstractWebsocketClient::k_postgresql_min_queries_per_conn_lc_     = "postgresql_min_queries_per_conn";
 const char* ngx::ws::AbstractWebsocketClient::k_postgresql_max_queries_per_conn_lc_     = "postgresql_max_queries_per_conn";
+const char* ngx::ws::AbstractWebsocketClient::k_curl_max_conn_per_worker_lc_            = "curl_max_conn_per_worker";
 
 const char* ngx::ws::AbstractWebsocketClient::k_json_api_url_key_lc_                    = "json_api_url";
 const char* ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_lc_            = "jrxml_base_directory";
@@ -54,6 +55,8 @@ const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_      
 const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_    = "beanstalkd_sessionless_tubes";
 const char* ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_          = "logger_register_tokens";
 const char* ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_    = "data_source_overridable_sys_vars";
+
+const char* ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_               = "http_base_url_map";
 
 #ifdef __APPLE__
 #pragma mark - AbstractWebsocketClient: Registry

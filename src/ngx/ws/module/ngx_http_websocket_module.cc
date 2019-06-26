@@ -211,6 +211,14 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NULL
     },
     {
+        ngx_string("nginx_websocket_curl_max_conn_per_worker"),         /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, curl_max_conn_per_worker),
+        NULL
+    },
+    {
         ngx_string("nginx_websocket_json_api_url"),          /* directive name */
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
@@ -284,6 +292,14 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         offsetof(ngx_http_websocket_module_loc_conf_t, data_source_overridable_sys_vars),
         NULL
     },
+    {
+        ngx_string("nginx_websocket_http_requests_base_url_map"),     /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, http_requests_base_url_map),
+        NULL
+    },
     ngx_null_command
 };
 
@@ -355,6 +371,7 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->postgresql_max_conn_per_worker  = NGX_CONF_UNSET;
     conf->postgresql_min_queries_per_conn = NGX_CONF_UNSET;
     conf->postgresql_max_queries_per_conn = NGX_CONF_UNSET;
+    conf->curl_max_conn_per_worker        = NGX_CONF_UNSET;
     conf->json_api_url.len                = 0;
     conf->json_api_url.data               = NULL;
     conf->jrxml_base_directory.len        = 0;
@@ -371,6 +388,8 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->logger_register_tokens.data       = NULL;
     conf->data_source_overridable_sys_vars.len  = 0;
     conf->data_source_overridable_sys_vars.data = NULL;
+    conf->http_requests_base_url_map.len = 0;
+    conf->http_requests_base_url_map.data = NULL;
     return conf;
 }
 
@@ -397,6 +416,7 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_value     (conf->postgresql_statement_timeout   , prev->postgresql_statement_timeout   ,         300 ); // in seconds
     ngx_conf_merge_value     (conf->postgresql_max_conn_per_worker , prev->postgresql_max_conn_per_worker ,           2 );
     ngx_conf_merge_value     (conf->postgresql_min_queries_per_conn, prev->postgresql_min_queries_per_conn,          -1 );
+    ngx_conf_merge_value     (conf->curl_max_conn_per_worker       , prev->curl_max_conn_per_worker       ,          -1 );
     ngx_conf_merge_value     (conf->postgresql_max_queries_per_conn, prev->postgresql_max_queries_per_conn,          -1 );
     ngx_conf_merge_str_value (conf->json_api_url                   , prev->json_api_url                   ,          "" );
     ngx_conf_merge_str_value (conf->jrxml_base_directory           , prev->jrxml_base_directory           ,          "" );
@@ -406,7 +426,8 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_value     (conf->beanstalkd_timeout             , prev->beanstalkd_timeout             ,           0 );
     ngx_conf_merge_str_value (conf->beanstalkd_sessionless_tubes   , prev->beanstalkd_sessionless_tubes   ,          "" );
     ngx_conf_merge_str_value (conf->logger_register_tokens         , prev->logger_register_tokens         ,        "[]" );
-    ngx_conf_merge_str_value (conf->data_source_overridable_sys_vars, prev->data_source_overridable_sys_vars,        "[]" );
+    ngx_conf_merge_str_value (conf->data_source_overridable_sys_vars, prev->data_source_overridable_sys_vars,      "[]" );
+    ngx_conf_merge_str_value (conf->http_requests_base_url_map      , conf->http_requests_base_url_map      ,      "[]" );
     return (char*) NGX_CONF_OK;
 }
 
@@ -1214,6 +1235,8 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_postgresql_max_conn_per_worker_lc_, std::to_string(a_loc_conf->postgresql_max_conn_per_worker)));
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_postgresql_min_queries_per_conn_lc_, std::to_string(a_loc_conf->postgresql_min_queries_per_conn)));
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_postgresql_max_queries_per_conn_lc_, std::to_string(a_loc_conf->postgresql_max_queries_per_conn)));
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_curl_max_conn_per_worker_lc_,
+            std::to_string(a_loc_conf->curl_max_conn_per_worker)));
 
         if ( a_loc_conf->jrxml_base_directory.len > 0 ) {
             std::string jrxml_path = std::string(reinterpret_cast<char const*>(a_loc_conf->jrxml_base_directory.data), a_loc_conf->jrxml_base_directory.len);
@@ -1264,6 +1287,13 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
             config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_,
                                              std::string(reinterpret_cast<char const*>(a_loc_conf->data_source_overridable_sys_vars.data), a_loc_conf->data_source_overridable_sys_vars.len)
                               )
+            );
+        }
+        
+        if ( a_loc_conf->http_requests_base_url_map.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->http_requests_base_url_map.data), a_loc_conf->http_requests_base_url_map.len)
+                                             )
             );
         }
 
