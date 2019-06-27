@@ -58,6 +58,8 @@ const char* ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars
 
 const char* ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_               = "http_base_url_map";
 
+const char* ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_                  = "session_fields";
+
 #ifdef __APPLE__
 #pragma mark - AbstractWebsocketClient: Registry
 #endif

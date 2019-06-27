@@ -79,6 +79,7 @@ namespace ngx
             static const char*     k_logger_register_tokens_key_lc_;
             static const char*     k_data_source_overridable_sys_vars_lc_;
             static const char*     k_http_base_url_map_key_lc_;
+            static const char*     k_session_fields_key_lc_;
 
         protected: // Data
 

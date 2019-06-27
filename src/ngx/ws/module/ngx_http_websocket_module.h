@@ -71,6 +71,7 @@ typedef struct {
     ngx_str_t  logger_register_tokens;          //!<
     ngx_str_t  data_source_overridable_sys_vars; //!<
     ngx_str_t  http_requests_base_url_map;
+    ngx_str_t  session_fields;
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;

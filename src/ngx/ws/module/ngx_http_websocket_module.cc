@@ -300,6 +300,14 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         offsetof(ngx_http_websocket_module_loc_conf_t, http_requests_base_url_map),
         NULL
     },
+    {
+        ngx_string("nginx_websocket_session_fields"),     /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, session_fields),
+        NULL
+    },
     ngx_null_command
 };
 
@@ -390,6 +398,8 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->data_source_overridable_sys_vars.data = NULL;
     conf->http_requests_base_url_map.len = 0;
     conf->http_requests_base_url_map.data = NULL;
+    conf->session_fields.len = 0;
+    conf->session_fields.data = NULL;
     return conf;
 }
 
@@ -427,7 +437,9 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_str_value (conf->beanstalkd_sessionless_tubes   , prev->beanstalkd_sessionless_tubes   ,          "" );
     ngx_conf_merge_str_value (conf->logger_register_tokens         , prev->logger_register_tokens         ,        "[]" );
     ngx_conf_merge_str_value (conf->data_source_overridable_sys_vars, prev->data_source_overridable_sys_vars,      "[]" );
-    ngx_conf_merge_str_value (conf->http_requests_base_url_map      , conf->http_requests_base_url_map      ,      "[]" );
+    ngx_conf_merge_str_value (conf->http_requests_base_url_map      , prev->http_requests_base_url_map      ,      "[]" );
+    ngx_conf_merge_str_value (conf->session_fields                  , prev->session_fields                  ,
+                              "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\"]" );
     return (char*) NGX_CONF_OK;
 }
 
@@ -1295,6 +1307,13 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
                                              std::string(reinterpret_cast<char const*>(a_loc_conf->http_requests_base_url_map.data), a_loc_conf->http_requests_base_url_map.len)
                                              )
             );
+        }
+
+        if ( a_loc_conf->session_fields.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->session_fields.data), a_loc_conf->session_fields.len)
+                                             )
+                              );
         }
 
         // create context
