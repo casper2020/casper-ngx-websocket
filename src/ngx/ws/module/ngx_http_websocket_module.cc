@@ -439,7 +439,7 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_str_value (conf->data_source_overridable_sys_vars, prev->data_source_overridable_sys_vars,      "[]" );
     ngx_conf_merge_str_value (conf->http_requests_base_url_map      , prev->http_requests_base_url_map      ,      "[]" );
     ngx_conf_merge_str_value (conf->session_fields                  , prev->session_fields                  ,
-                              "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\"]" );
+                              "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\",\"user_email\"]" );
     return (char*) NGX_CONF_OK;
 }
 
