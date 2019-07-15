@@ -249,7 +249,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_host),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.host),
         NULL
     },
     {
@@ -257,7 +257,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_num_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_port),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.port),
         NULL
     },
     {
@@ -265,7 +265,15 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_num_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_timeout),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.timeout),
+        NULL
+    },
+    {
+        ngx_string("nginx_websocket_beanstalkd_action_tubes"),         /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.tubes.action),
         NULL
     },
     {
@@ -273,7 +281,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_sessionless_tubes),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.tubes.sessionless),
         NULL
     },
     {
@@ -386,12 +394,14 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->jrxml_base_directory.data       = NULL;
     conf->service_id.len                  = 0;
     conf->service_id.data                 = NULL;
-    conf->beanstalkd_host.len             = 0;
-    conf->beanstalkd_host.data            = NULL;
-    conf->beanstalkd_port                 = NGX_CONF_UNSET;
-    conf->beanstalkd_timeout              = NGX_CONF_UNSET;
-    conf->beanstalkd_sessionless_tubes.len  = 0;
-    conf->beanstalkd_sessionless_tubes.data = NULL;
+    conf->beanstalkd.host.len             = 0;
+    conf->beanstalkd.host.data            = NULL;
+    conf->beanstalkd.port                 = NGX_CONF_UNSET;
+    conf->beanstalkd.timeout              = NGX_CONF_UNSET;
+    conf->beanstalkd.tubes.action.len     =  0;
+    conf->beanstalkd.tubes.action.data    = NULL;
+    conf->beanstalkd.tubes.sessionless.len  =  0;
+    conf->beanstalkd.tubes.sessionless.data = NULL;
     conf->logger_register_tokens.len        = 0;
     conf->logger_register_tokens.data       = NULL;
     conf->data_source_overridable_sys_vars.len  = 0;
@@ -431,10 +441,11 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_str_value (conf->json_api_url                   , prev->json_api_url                   ,          "" );
     ngx_conf_merge_str_value (conf->jrxml_base_directory           , prev->jrxml_base_directory           ,          "" );
     ngx_conf_merge_str_value (conf->service_id                     , prev->service_id                     ,          "" );
-    ngx_conf_merge_str_value (conf->beanstalkd_host                , prev->beanstalkd_host                , "127.0.0.1" );
-    ngx_conf_merge_value     (conf->beanstalkd_port                , prev->beanstalkd_port                ,       11300 );
-    ngx_conf_merge_value     (conf->beanstalkd_timeout             , prev->beanstalkd_timeout             ,           0 );
-    ngx_conf_merge_str_value (conf->beanstalkd_sessionless_tubes   , prev->beanstalkd_sessionless_tubes   ,          "" );
+    ngx_conf_merge_str_value (conf->beanstalkd.host                , prev->beanstalkd.host                , "127.0.0.1" );
+    ngx_conf_merge_value     (conf->beanstalkd.port                , prev->beanstalkd.port                ,       11300 );
+    ngx_conf_merge_value     (conf->beanstalkd.timeout             , prev->beanstalkd.timeout             ,           0 );
+    ngx_conf_merge_str_value (conf->beanstalkd.tubes.action        , prev->beanstalkd.tubes.action        ,          "" );
+    ngx_conf_merge_str_value (conf->beanstalkd.tubes.sessionless   , prev->beanstalkd.tubes.sessionless   ,          "" );
     ngx_conf_merge_str_value (conf->logger_register_tokens         , prev->logger_register_tokens         ,        "[]" );
     ngx_conf_merge_str_value (conf->data_source_overridable_sys_vars, prev->data_source_overridable_sys_vars,      "[]" );
     ngx_conf_merge_str_value (conf->http_requests_base_url_map      , prev->http_requests_base_url_map      ,      "[]" );
@@ -1274,20 +1285,25 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         }
 
         // ... add beanstalk config ...
-        if ( a_loc_conf->beanstalkd_host.len > 0 ) {
-            const std::string beanstalkd_host = std::string(reinterpret_cast<char const*>(a_loc_conf->beanstalkd_host.data), a_loc_conf->beanstalkd_host.len);
+        if ( a_loc_conf->beanstalkd.host.len > 0 ) {
+            const std::string beanstalkd_host = std::string(reinterpret_cast<char const*>(a_loc_conf->beanstalkd.host.data), a_loc_conf->beanstalkd.host.len);
             config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_host_key_lc_, beanstalkd_host));
         }
-        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_port_key_lc_    , std::to_string(a_loc_conf->beanstalkd_port)));
-        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_ , std::to_string(a_loc_conf->beanstalkd_timeout)));
-
-        if ( a_loc_conf->beanstalkd_sessionless_tubes.len > 0 ) {
-            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_,
-                                              std::string(reinterpret_cast<char const*>(a_loc_conf->beanstalkd_sessionless_tubes.data), a_loc_conf->beanstalkd_sessionless_tubes.len)
-                               )
-            );
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_port_key_lc_    , std::to_string(a_loc_conf->beanstalkd.port)));
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_ , std::to_string(a_loc_conf->beanstalkd.timeout)));
+        const std::map<const char* const, const ngx_str_t*> beanstalk_conf_strings_map = {
+            { ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_, &a_loc_conf->beanstalkd.tubes.sessionless },
+            { ngx::ws::AbstractWebsocketClient::k_beanstalkd_action_tubes_key_lc_     , &a_loc_conf->beanstalkd.tubes.action      }
+        };
+        for ( auto bcsm_it : beanstalk_conf_strings_map ) {
+            if ( bcsm_it.second->len > 0 ) {
+                config_map.insert(std::make_pair(bcsm_it.first,
+                                                 std::string(reinterpret_cast<char const*>(bcsm_it.second->data), bcsm_it.second->len)
+                 )
+               );
+            }
         }
-        
+                
         if ( a_loc_conf->logger_register_tokens.len > 0 ) {
             config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_,
                                              std::string(reinterpret_cast<char const*>(a_loc_conf->logger_register_tokens.data), a_loc_conf->logger_register_tokens.len)

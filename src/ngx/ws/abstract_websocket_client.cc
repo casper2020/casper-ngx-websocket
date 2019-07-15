@@ -25,40 +25,41 @@
 #include <algorithm>   // std::remove_if
 
 // public static data
-const char* ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_       = "sec-websocket-protocol";
-const char* ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_    = "remote-ip";
-const char* ngx::ws::AbstractWebsocketClient::k_websocket_resources_root_key_lc_        = "resources-root";
-const char* ngx::ws::AbstractWebsocketClient::k_websocket_logs_root_key_lc_             = "logs-root";
-const char* ngx::ws::AbstractWebsocketClient::k_websocket_http_file_server_host_key_lc_ = "http_file_server_host";
-const char* ngx::ws::AbstractWebsocketClient::k_websocket_http_file_server_port_key_lc_ = "http_file_server_port";
-const char* ngx::ws::AbstractWebsocketClient::k_http_json_content_type_                 = "application/json; charset=utf-8";
-const char* ngx::ws::AbstractWebsocketClient::k_redis_ip_address_key_lc_                = "redis_ip_address";
-const char* ngx::ws::AbstractWebsocketClient::k_redis_port_number_key_lc_               = "redis_port_number";
-const char* ngx::ws::AbstractWebsocketClient::k_redis_database_key_lc_                  = "redis_database";
-const char* ngx::ws::AbstractWebsocketClient::k_redis_max_conn_per_worker_lc_           = "redis_max_conn_per_worker";
-const char* ngx::ws::AbstractWebsocketClient::k_postgresql_conn_str_key_lc_             = "postgresql_conn_str";
-const char* ngx::ws::AbstractWebsocketClient::k_postgresql_statement_timeout_lc_        = "postgresql_statement_timeout";
-const char* ngx::ws::AbstractWebsocketClient::k_postgresql_post_connect_queries_lc_     = "postgresql_post_connect_queries";
-const char* ngx::ws::AbstractWebsocketClient::k_postgresql_max_conn_per_worker_lc_      = "postgresql_max_conn_per_worker";
-const char* ngx::ws::AbstractWebsocketClient::k_postgresql_min_queries_per_conn_lc_     = "postgresql_min_queries_per_conn";
-const char* ngx::ws::AbstractWebsocketClient::k_postgresql_max_queries_per_conn_lc_     = "postgresql_max_queries_per_conn";
-const char* ngx::ws::AbstractWebsocketClient::k_curl_max_conn_per_worker_lc_            = "curl_max_conn_per_worker";
+const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_       = "sec-websocket-protocol";
+const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_    = "remote-ip";
+const char* const ngx::ws::AbstractWebsocketClient::k_websocket_resources_root_key_lc_        = "resources-root";
+const char* const ngx::ws::AbstractWebsocketClient::k_websocket_logs_root_key_lc_             = "logs-root";
+const char* const ngx::ws::AbstractWebsocketClient::k_websocket_http_file_server_host_key_lc_ = "http_file_server_host";
+const char* const ngx::ws::AbstractWebsocketClient::k_websocket_http_file_server_port_key_lc_ = "http_file_server_port";
+const char* const ngx::ws::AbstractWebsocketClient::k_http_json_content_type_                 = "application/json; charset=utf-8";
+const char* const ngx::ws::AbstractWebsocketClient::k_redis_ip_address_key_lc_                = "redis_ip_address";
+const char* const ngx::ws::AbstractWebsocketClient::k_redis_port_number_key_lc_               = "redis_port_number";
+const char* const ngx::ws::AbstractWebsocketClient::k_redis_database_key_lc_                  = "redis_database";
+const char* const ngx::ws::AbstractWebsocketClient::k_redis_max_conn_per_worker_lc_           = "redis_max_conn_per_worker";
+const char* const ngx::ws::AbstractWebsocketClient::k_postgresql_conn_str_key_lc_             = "postgresql_conn_str";
+const char* const ngx::ws::AbstractWebsocketClient::k_postgresql_statement_timeout_lc_        = "postgresql_statement_timeout";
+const char* const ngx::ws::AbstractWebsocketClient::k_postgresql_post_connect_queries_lc_     = "postgresql_post_connect_queries";
+const char* const ngx::ws::AbstractWebsocketClient::k_postgresql_max_conn_per_worker_lc_      = "postgresql_max_conn_per_worker";
+const char* const ngx::ws::AbstractWebsocketClient::k_postgresql_min_queries_per_conn_lc_     = "postgresql_min_queries_per_conn";
+const char* const ngx::ws::AbstractWebsocketClient::k_postgresql_max_queries_per_conn_lc_     = "postgresql_max_queries_per_conn";
+const char* const ngx::ws::AbstractWebsocketClient::k_curl_max_conn_per_worker_lc_            = "curl_max_conn_per_worker";
 
-const char* ngx::ws::AbstractWebsocketClient::k_json_api_url_key_lc_                    = "json_api_url";
-const char* ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_lc_            = "jrxml_base_directory";
+const char* const ngx::ws::AbstractWebsocketClient::k_json_api_url_key_lc_                    = "json_api_url";
+const char* const ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_lc_            = "jrxml_base_directory";
 
-const char* ngx::ws::AbstractWebsocketClient::k_service_id_lc_                          = "service_id";
+const char* const ngx::ws::AbstractWebsocketClient::k_service_id_lc_                          = "service_id";
 
-const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_host_key_lc_                 = "beanstalkd_host";
-const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_port_key_lc_                 = "beanstalkd_port";
-const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_              = "beanstalkd_timeout";
-const char* ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_    = "beanstalkd_sessionless_tubes";
-const char* ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_          = "logger_register_tokens";
-const char* ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_    = "data_source_overridable_sys_vars";
+const char* const ngx::ws::AbstractWebsocketClient::k_beanstalkd_host_key_lc_                 = "beanstalkd_host";
+const char* const ngx::ws::AbstractWebsocketClient::k_beanstalkd_port_key_lc_                 = "beanstalkd_port";
+const char* const ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_              = "beanstalkd_timeout";
+const char* const ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_    = "beanstalkd_sessionless_tubes";
+const char* const ngx::ws::AbstractWebsocketClient::k_beanstalkd_action_tubes_key_lc_         = "beanstalkd_action_tubes";
+const char* const ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_          = "logger_register_tokens";
+const char* const ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_    = "data_source_overridable_sys_vars";
 
-const char* ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_               = "http_base_url_map";
+const char* const ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_               = "http_base_url_map";
 
-const char* ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_                  = "session_fields";
+const char* const ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_                  = "session_fields";
 
 #ifdef __APPLE__
 #pragma mark - AbstractWebsocketClient: Registry
