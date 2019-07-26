@@ -1041,7 +1041,11 @@ void ngx_http_websocket_module_idle_handler (ngx_event_t* a_ev)
         goto exception_caught;
     } catch (...) {
         //
-        exception_msg = "???";
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch(const std::exception& e) {
+            exception_msg = e.what();
+        }
         //
         goto exception_caught;
     }
@@ -1107,7 +1111,12 @@ static void ngx_http_websocket_module_timer_handler (ngx_event_t* a_ev)
         ngx_http_websocket_module_log_msg(data->request_ptr_, NGX_LOG_ERR, "[ngx_ws_module, 0x%p, IH] : *** EXCEPTION, %s",
                                           data->request_ptr_, exception_msg.c_str());
     } catch (...) {
-        exception_msg = "???";
+        //
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch(const std::exception& e) {
+            exception_msg = e.what();
+        }
         // log
         ngx_http_websocket_module_log_msg(data->request_ptr_, NGX_LOG_ERR, "[ngx_ws_module, 0x%p, IH] : *** EXCEPTION, %s",
                                           data->request_ptr_, exception_msg.c_str());
@@ -1354,7 +1363,11 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         goto exception_caught;
     } catch (...) {
         //
-        exception_message = "???";
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch(const std::exception& e) {
+            exception_message = e.what();
+        }
         //
         goto exception_caught;
     }
