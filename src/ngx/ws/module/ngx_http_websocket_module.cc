@@ -436,7 +436,7 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_value     (conf->postgresql_statement_timeout   , prev->postgresql_statement_timeout   ,         300 ); // in seconds
     ngx_conf_merge_value     (conf->postgresql_max_conn_per_worker , prev->postgresql_max_conn_per_worker ,           2 );
     ngx_conf_merge_value     (conf->postgresql_min_queries_per_conn, prev->postgresql_min_queries_per_conn,          -1 );
-    ngx_conf_merge_value     (conf->curl_max_conn_per_worker       , prev->curl_max_conn_per_worker       ,          -1 );
+    ngx_conf_merge_value     (conf->curl_max_conn_per_worker       , prev->curl_max_conn_per_worker       ,          10 );
     ngx_conf_merge_value     (conf->postgresql_max_queries_per_conn, prev->postgresql_max_queries_per_conn,          -1 );
     ngx_conf_merge_str_value (conf->json_api_url                   , prev->json_api_url                   ,          "" );
     ngx_conf_merge_str_value (conf->jrxml_base_directory           , prev->jrxml_base_directory           ,          "" );
@@ -1041,11 +1041,7 @@ void ngx_http_websocket_module_idle_handler (ngx_event_t* a_ev)
         goto exception_caught;
     } catch (...) {
         //
-        try {
-            std::rethrow_exception(std::current_exception());
-        } catch(const std::exception& e) {
-            exception_msg = e.what();
-        }
+        exception_msg = "C++ Generic Exception: " + ngx::ws::NGXException::What(std::current_exception(), __FILE__, __LINE__);
         //
         goto exception_caught;
     }
@@ -1112,11 +1108,7 @@ static void ngx_http_websocket_module_timer_handler (ngx_event_t* a_ev)
                                           data->request_ptr_, exception_msg.c_str());
     } catch (...) {
         //
-        try {
-            std::rethrow_exception(std::current_exception());
-        } catch(const std::exception& e) {
-            exception_msg = e.what();
-        }
+        exception_msg = "C++ Generic Exception: " + ngx::ws::NGXException::What(std::current_exception(), __FILE__, __LINE__);
         // log
         ngx_http_websocket_module_log_msg(data->request_ptr_, NGX_LOG_ERR, "[ngx_ws_module, 0x%p, IH] : *** EXCEPTION, %s",
                                           data->request_ptr_, exception_msg.c_str());
@@ -1363,11 +1355,7 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         goto exception_caught;
     } catch (...) {
         //
-        try {
-            std::rethrow_exception(std::current_exception());
-        } catch(const std::exception& e) {
-            exception_message = e.what();
-        }
+        exception_message = "~Context::Setup~ - C++ Generic Exception: " + ngx::ws::NGXException::What(std::current_exception(), __FILE__, __LINE__);
         //
         goto exception_caught;
     }

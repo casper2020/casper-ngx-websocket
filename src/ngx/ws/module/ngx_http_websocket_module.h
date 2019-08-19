@@ -130,6 +130,29 @@ namespace ngx {
             {
                 return reason_;
             }
+            
+        public: // Static Method(s) / Function(s)
+            
+            static std::string What (const std::exception_ptr& a_ptr, const char* const a_file, int a_line)
+            {
+                std::string exception_message = std::string(a_file) + ':' + std::to_string(a_line) + ' ';
+                if ( a_ptr ) {
+#ifdef __APPLE__
+                    try {
+                        std::rethrow_exception(a_ptr);
+                    } catch(const std::exception& e) {
+                        exception_message += std::string(e.what());
+                    } catch (...) {
+                        exception_message += "???";
+                    }
+#else
+                    exception_message += std::string(a_ptr.__cxa_exception_type()->name());
+#endif
+                } else {
+                    exception_message += "std::exception_ptr is nullptr";
+                }
+                return exception_message;
+            }
 
         };
 
