@@ -82,6 +82,7 @@ namespace ngx
             static const char* const k_http_base_url_map_key_lc_;
             static const char* const k_session_fields_key_lc_;
             static const char* const k_session_extension_amount_key_lc_;
+            static const char* const k_gatekeeper_configuration_file_uri_key_lc_;
 
         protected: // Data
 

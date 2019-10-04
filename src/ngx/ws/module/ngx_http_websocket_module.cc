@@ -324,6 +324,15 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         offsetof(ngx_http_websocket_module_loc_conf_t, session_ttl_extension),
         NULL
     },
+    /* gatekeeper */
+    {
+        ngx_string("nginx_websocket_gatekeeper_configuration_file_uri"),     /* directive name */
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, gatekeeper_configuration_file_uri),
+        NULL
+    },
     ngx_null_command
 };
 
@@ -419,6 +428,8 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->session_fields.len = 0;
     conf->session_fields.data = NULL;
     conf->session_ttl_extension = NGX_CONF_UNSET;
+    conf->gatekeeper_configuration_file_uri.len = 0;
+    conf->gatekeeper_configuration_file_uri.data = NULL;
     return conf;
 }
 
@@ -460,7 +471,10 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_str_value (conf->http_requests_base_url_map      , prev->http_requests_base_url_map      ,      "[]" );
     ngx_conf_merge_str_value (conf->session_fields                  , prev->session_fields                  ,
                               "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\",\"user_email\"]" );
-    ngx_conf_merge_value     (conf->session_ttl_extension           , prev->session_ttl_extension           ,        3600 );
+    ngx_conf_merge_value     (conf->session_ttl_extension            , prev->session_ttl_extension          ,        3600 );
+    /* gatekeeper */
+    ngx_conf_merge_str_value (conf->gatekeeper_configuration_file_uri, prev->gatekeeper_configuration_file_uri,        "" );
+    // ... done ...
     return (char*) NGX_CONF_OK;
 }
 
@@ -1347,6 +1361,13 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
                                         std::to_string(static_cast<size_t>(a_loc_conf->session_ttl_extension))
                                         )
                           );
+        
+        if ( a_loc_conf->gatekeeper_configuration_file_uri.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_gatekeeper_configuration_file_uri_key_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->gatekeeper_configuration_file_uri.data), a_loc_conf->gatekeeper_configuration_file_uri.len)
+                                             )
+            );
+        }
 
         // create context
         context = new ngx::ws::NGXContext(ngx_http_websocket_module, a_r,

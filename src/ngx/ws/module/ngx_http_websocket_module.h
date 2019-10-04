@@ -84,6 +84,7 @@ typedef struct {
     ngx_str_t                               http_requests_base_url_map;
     ngx_str_t                               session_fields;
     ngx_uint_t                              session_ttl_extension;
+    ngx_str_t                               gatekeeper_configuration_file_uri;
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;
