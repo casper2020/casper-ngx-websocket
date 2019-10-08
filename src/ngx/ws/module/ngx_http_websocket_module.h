@@ -45,14 +45,18 @@ extern "C" {
 typedef struct {
     ngx_str_t  action;         //!<
     ngx_str_t  sessionless;    //!<
-} ngx_http_casper_broker_beanstalk_tubes_conf_t;
+} ngx_http_casper_beanstalk_tubes_conf_t;
 
 typedef struct {
-    ngx_str_t  host;                                     //!<
-    ngx_uint_t port;                                     //!<
-    ngx_int_t  timeout;                                  //!<
-    ngx_http_casper_broker_beanstalk_tubes_conf_t tubes; //!<
-} ngx_http_casper_broker_beanstalk_conf_t;
+    ngx_str_t  host;                              //!<
+    ngx_uint_t port;                              //!<
+    ngx_int_t  timeout;                           //!<
+    ngx_http_casper_beanstalk_tubes_conf_t tubes; //!<
+} ngx_http_casper_beanstalk_conf_t;
+
+typedef struct {
+    ngx_str_t config_file_uri;
+} ngx_http_casper_gatekeeper_conf_t;
 
 /**
  * @brief Module configuration structure, applicable to a location scope
@@ -78,13 +82,13 @@ typedef struct {
     ngx_str_t                               json_api_url;                     //!<
     ngx_str_t                               jrxml_base_directory;             //!<
     ngx_str_t                               service_id;                       //!<
-    ngx_http_casper_broker_beanstalk_conf_t beanstalkd;                       //!<
+    ngx_http_casper_beanstalk_conf_t        beanstalkd;                       //!<
     ngx_str_t                               logger_register_tokens;           //!<
     ngx_str_t                               data_source_overridable_sys_vars; //!<
     ngx_str_t                               http_requests_base_url_map;
     ngx_str_t                               session_fields;
     ngx_uint_t                              session_ttl_extension;
-    ngx_str_t                               gatekeeper_configuration_file_uri;
+    ngx_http_casper_gatekeeper_conf_t       gatekeeper;
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;

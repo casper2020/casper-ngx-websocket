@@ -62,7 +62,7 @@ const char* const ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_ 
 const char* const ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_                  = "session_fields";
 const char* const ngx::ws::AbstractWebsocketClient::k_session_extension_amount_key_lc_        = "session_extension_amount";
 
-const char* const ngx::ws::AbstractWebsocketClient::k_gatekeeper_configuration_file_uri_key_lc_ = "gatekeeper_configuration_file_uri";
+const char* const ngx::ws::AbstractWebsocketClient::k_gatekeeper_config_file_uri_key_lc_      = "gatekeeper_config_file_uri";
 
 #ifdef __APPLE__
 #pragma mark - AbstractWebsocketClient: Registry
