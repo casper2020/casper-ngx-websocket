@@ -101,13 +101,13 @@ diff -ur nginx-1.8.0/src/http/ngx_http_request.c src/nginx/src/http/ngx_http_req
      ngx_destroy_pool(pool);
  }
 
-diff -ur src/nginx/src/http/ngx_http_request.h.orig src/nginx/src/http/ngx_http_request.h 
+diff -ur src/nginx/src/http/ngx_http_request.h.orig src/nginx/src/http/ngx_http_request.h
 --- src/nginx/src/http/ngx_http_request.h.orig  2017-04-25 15:18:23.000000000 +0100
 +++ src/nginx/src/http/ngx_http_request.h   2017-05-04 09:24:44.000000000 +0100
 @@ -509,6 +509,9 @@
      unsigned                          cacheable:1;
  #endif
- 
+
 +    unsigned                          websocket_request:1;
 +    unsigned                          websocket_subrequest:1;
 +
@@ -121,37 +121,36 @@ diff -ur src/nginx/src/os/unix/ngx_process.c.orig src/nginx/src/os/unix/ngx_proc
 @@ -313,6 +313,7 @@
      return NGX_OK;
  }
- 
+
 +extern void ngx_websocket_signal_handler (int a_sig_no);
- 
+
  static void
  ngx_signal_handler(int signo, siginfo_t *siginfo, void *ucontext)
 @@ -322,6 +323,8 @@
      ngx_err_t        err;
      ngx_signal_t    *sig;
- 
+
 +   ngx_websocket_signal_handler(signo);
 +
      ignore = 0;
- 
+
      err = ngx_errno;
 
 --- ./src/nginx/src/core/nginx.c.orig	2016-09-27 14:32:50.000000000 +0100
 +++ ./src/nginx/src/core/nginx.c	2016-09-30 15:02:51.000000000 +0100
 @@ -190,6 +190,7 @@
- 
+
  static char **ngx_os_environ;
- 
-+extern void ngx_websocket_main_hook (const ngx_core_conf_t* a_config);
- 
+
++extern void ngx_websocket_main_hook (const ngx_core_conf_t* a_config, const ngx_cycle_t* a_cycle);
+
  int ngx_cdecl
  main(int argc, char *const *argv)
 @@ -368,6 +369,8 @@
- 
+
      ngx_use_stderr = 0;
- 
-+    ngx_websocket_main_hook(ccf);
+
++    ngx_websocket_main_hook(ccf, cycle);
 +
      if (ngx_process == NGX_PROCESS_SINGLE) {
          ngx_single_process_cycle(cycle);
- 

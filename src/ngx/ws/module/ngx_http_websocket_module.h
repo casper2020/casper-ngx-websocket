@@ -40,34 +40,55 @@ extern "C" {
 #pragma mark - NGINX websocket module loc_conf_t
 #endif
 
+/* BEANSTALKD data types */
+
+typedef struct {
+    ngx_str_t  action;         //!<
+    ngx_str_t  sessionless;    //!<
+} ngx_http_casper_beanstalk_tubes_conf_t;
+
+typedef struct {
+    ngx_str_t  host;                              //!<
+    ngx_uint_t port;                              //!<
+    ngx_int_t  timeout;                           //!<
+    ngx_http_casper_beanstalk_tubes_conf_t tubes; //!<
+} ngx_http_casper_beanstalk_conf_t;
+
+typedef struct {
+    ngx_str_t config_file_uri;
+} ngx_http_casper_gatekeeper_conf_t;
+
 /**
  * @brief Module configuration structure, applicable to a location scope
  */
 typedef struct {
-    ngx_flag_t enable;                          //!< flag that enables the module
-    ngx_int_t  ping_period;                     //!< the number of seconds between pings
-    ngx_int_t  idle_timeout;                    //!< the maximum number of seconds without exchanging data messages
-    ngx_str_t  resources_root;                  //!< the resources root path
-    ngx_str_t  logs_root;                       //!< the logs root path
-    ngx_str_t  http_file_server_host;           //!< Hostname or ip of the http server that distributes the PDF files that stored on the local filesystem
-    ngx_int_t  http_file_server_port;           //!< Port of the http server that distributes the PDF files that stored on the local filesystem
-    ngx_str_t  redis_ip_address;                //!<
-    ngx_int_t  redis_port_number;               //!<
-    ngx_int_t  redis_database;                  //!<
-    ngx_int_t  redis_max_conn_per_worker;       //!<
-    ngx_str_t  postgresql_conn_str;             //!<
-    ngx_int_t  postgresql_statement_timeout;    //!<
-    ngx_int_t  postgresql_max_conn_per_worker;  //!<
-    ngx_int_t  postgresql_max_queries_per_conn; //!<
-    ngx_int_t  postgresql_min_queries_per_conn; //!<
-    ngx_str_t  json_api_url;                    //!<
-    ngx_str_t  jrxml_base_directory;            //!<
-    ngx_str_t  service_id;                      //!<
-    ngx_str_t  beanstalkd_host;                 //!<
-    ngx_int_t  beanstalkd_port;                 //!<
-    ngx_int_t  beanstalkd_timeout;              //!<
-    ngx_str_t  beanstalkd_sessionless_tubes;    //!<
-    ngx_str_t  logger_register_tokens;          //!<
+    ngx_flag_t                              enable;                           //!< flag that enables the module
+    ngx_int_t                               ping_period;                      //!< the number of seconds between pings
+    ngx_int_t                               idle_timeout;                     //!< the maximum number of seconds without exchanging data messages
+    ngx_str_t                               resources_root;                   //!< the resources root path
+    ngx_str_t                               logs_root;                        //!< the logs root path
+    ngx_str_t                               http_file_server_host;            //!< Hostname or ip of the http server that distributes the PDF files that stored on the local filesystem
+    ngx_int_t                               http_file_server_port;            //!< Port of the http server that distributes the PDF files that stored on the local filesystem
+    ngx_str_t                               redis_ip_address;                 //!<
+    ngx_int_t                               redis_port_number;                //!<
+    ngx_int_t                               redis_database;                   //!<
+    ngx_int_t                               redis_max_conn_per_worker;        //!<
+    ngx_str_t                               postgresql_conn_str;              //!<
+    ngx_int_t                               postgresql_statement_timeout;     //!<
+    ngx_int_t                               postgresql_max_conn_per_worker;   //!<
+    ngx_int_t                               postgresql_max_queries_per_conn;  //!<
+    ngx_int_t                               postgresql_min_queries_per_conn;  //!<
+    ngx_int_t                               curl_max_conn_per_worker;         //!<
+    ngx_str_t                               json_api_url;                     //!<
+    ngx_str_t                               jrxml_base_directory;             //!<
+    ngx_str_t                               service_id;                       //!<
+    ngx_http_casper_beanstalk_conf_t        beanstalkd;                       //!<
+    ngx_str_t                               logger_register_tokens;           //!<
+    ngx_str_t                               data_source_overridable_sys_vars; //!<
+    ngx_str_t                               http_requests_base_url_map;
+    ngx_str_t                               session_fields;
+    ngx_uint_t                              session_ttl_extension;
+    ngx_http_casper_gatekeeper_conf_t       gatekeeper;
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;
@@ -114,6 +135,29 @@ namespace ngx {
             virtual const char* what() const throw()
             {
                 return reason_;
+            }
+            
+        public: // Static Method(s) / Function(s)
+            
+            static std::string What (const std::exception_ptr& a_ptr, const char* const a_file, int a_line)
+            {
+                std::string exception_message = std::string(a_file) + ':' + std::to_string(a_line) + ' ';
+                if ( a_ptr ) {
+#ifdef __APPLE__
+                    try {
+                        std::rethrow_exception(a_ptr);
+                    } catch(const std::exception& e) {
+                        exception_message += std::string(e.what());
+                    } catch (...) {
+                        exception_message += "???";
+                    }
+#else
+                    exception_message += std::string(a_ptr.__cxa_exception_type()->name());
+#endif
+                } else {
+                    exception_message += "std::exception_ptr is nullptr";
+                }
+                return exception_message;
             }
 
         };

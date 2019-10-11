@@ -211,6 +211,14 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NULL
     },
     {
+        ngx_string("nginx_websocket_curl_max_conn_per_worker"),         /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, curl_max_conn_per_worker),
+        NULL
+    },
+    {
         ngx_string("nginx_websocket_json_api_url"),          /* directive name */
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
@@ -241,7 +249,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_host),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.host),
         NULL
     },
     {
@@ -249,7 +257,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_num_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_port),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.port),
         NULL
     },
     {
@@ -257,7 +265,15 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_num_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_timeout),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.timeout),
+        NULL
+    },
+    {
+        ngx_string("nginx_websocket_beanstalkd_action_tubes"),         /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.tubes.action),
         NULL
     },
     {
@@ -265,7 +281,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd_sessionless_tubes),
+        offsetof(ngx_http_websocket_module_loc_conf_t, beanstalkd.tubes.sessionless),
         NULL
     },
     {
@@ -274,6 +290,47 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
         offsetof(ngx_http_websocket_module_loc_conf_t, logger_register_tokens),
+        NULL
+    },
+    {
+        ngx_string("nginx_websocket_data_source_overridable_sys_vars"),     /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, data_source_overridable_sys_vars),
+        NULL
+    },
+    {
+        ngx_string("nginx_websocket_http_requests_base_url_map"),     /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, http_requests_base_url_map),
+        NULL
+    },
+    {
+        ngx_string("nginx_websocket_session_fields"),     /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, session_fields),
+        NULL
+    },
+    {
+        ngx_string("nginx_websocket_session_ttl_extension"),     /* directive name */
+        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, session_ttl_extension),
+        NULL
+    },
+    /* gatekeeper */
+    {
+        ngx_string("nginx_websocket_gatekeeper_config_file_uri"),     /* directive name */
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_LOC_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_loc_conf_t, gatekeeper.config_file_uri),
         NULL
     },
     ngx_null_command
@@ -347,20 +404,32 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->postgresql_max_conn_per_worker  = NGX_CONF_UNSET;
     conf->postgresql_min_queries_per_conn = NGX_CONF_UNSET;
     conf->postgresql_max_queries_per_conn = NGX_CONF_UNSET;
+    conf->curl_max_conn_per_worker        = NGX_CONF_UNSET;
     conf->json_api_url.len                = 0;
     conf->json_api_url.data               = NULL;
     conf->jrxml_base_directory.len        = 0;
     conf->jrxml_base_directory.data       = NULL;
     conf->service_id.len                  = 0;
     conf->service_id.data                 = NULL;
-    conf->beanstalkd_host.len             = 0;
-    conf->beanstalkd_host.data            = NULL;
-    conf->beanstalkd_port                 = NGX_CONF_UNSET;
-    conf->beanstalkd_timeout              = NGX_CONF_UNSET;
-    conf->beanstalkd_sessionless_tubes.len  = 0;
-    conf->beanstalkd_sessionless_tubes.data = NULL;
+    conf->beanstalkd.host.len             = 0;
+    conf->beanstalkd.host.data            = NULL;
+    conf->beanstalkd.port                 = NGX_CONF_UNSET;
+    conf->beanstalkd.timeout              = NGX_CONF_UNSET;
+    conf->beanstalkd.tubes.action.len     =  0;
+    conf->beanstalkd.tubes.action.data    = NULL;
+    conf->beanstalkd.tubes.sessionless.len  =  0;
+    conf->beanstalkd.tubes.sessionless.data = NULL;
     conf->logger_register_tokens.len        = 0;
     conf->logger_register_tokens.data       = NULL;
+    conf->data_source_overridable_sys_vars.len  = 0;
+    conf->data_source_overridable_sys_vars.data = NULL;
+    conf->http_requests_base_url_map.len = 0;
+    conf->http_requests_base_url_map.data = NULL;
+    conf->session_fields.len = 0;
+    conf->session_fields.data = NULL;
+    conf->session_ttl_extension = NGX_CONF_UNSET;
+    conf->gatekeeper.config_file_uri.len = 0;
+    conf->gatekeeper.config_file_uri.data = NULL;
     return conf;
 }
 
@@ -387,15 +456,25 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_value     (conf->postgresql_statement_timeout   , prev->postgresql_statement_timeout   ,         300 ); // in seconds
     ngx_conf_merge_value     (conf->postgresql_max_conn_per_worker , prev->postgresql_max_conn_per_worker ,           2 );
     ngx_conf_merge_value     (conf->postgresql_min_queries_per_conn, prev->postgresql_min_queries_per_conn,          -1 );
+    ngx_conf_merge_value     (conf->curl_max_conn_per_worker       , prev->curl_max_conn_per_worker       ,          10 );
     ngx_conf_merge_value     (conf->postgresql_max_queries_per_conn, prev->postgresql_max_queries_per_conn,          -1 );
     ngx_conf_merge_str_value (conf->json_api_url                   , prev->json_api_url                   ,          "" );
     ngx_conf_merge_str_value (conf->jrxml_base_directory           , prev->jrxml_base_directory           ,          "" );
     ngx_conf_merge_str_value (conf->service_id                     , prev->service_id                     ,          "" );
-    ngx_conf_merge_str_value (conf->beanstalkd_host                , prev->beanstalkd_host                , "127.0.0.1" );
-    ngx_conf_merge_value     (conf->beanstalkd_port                , prev->beanstalkd_port                ,       11300 );
-    ngx_conf_merge_value     (conf->beanstalkd_timeout             , prev->beanstalkd_timeout             ,           0 );
-    ngx_conf_merge_str_value (conf->beanstalkd_sessionless_tubes   , prev->beanstalkd_sessionless_tubes   ,          "" );
+    ngx_conf_merge_str_value (conf->beanstalkd.host                , prev->beanstalkd.host                , "127.0.0.1" );
+    ngx_conf_merge_value     (conf->beanstalkd.port                , prev->beanstalkd.port                ,       11300 );
+    ngx_conf_merge_value     (conf->beanstalkd.timeout             , prev->beanstalkd.timeout             ,           0 );
+    ngx_conf_merge_str_value (conf->beanstalkd.tubes.action        , prev->beanstalkd.tubes.action        ,          "" );
+    ngx_conf_merge_str_value (conf->beanstalkd.tubes.sessionless   , prev->beanstalkd.tubes.sessionless   ,          "" );
     ngx_conf_merge_str_value (conf->logger_register_tokens         , prev->logger_register_tokens         ,        "[]" );
+    ngx_conf_merge_str_value (conf->data_source_overridable_sys_vars, prev->data_source_overridable_sys_vars,      "[]" );
+    ngx_conf_merge_str_value (conf->http_requests_base_url_map      , prev->http_requests_base_url_map      ,      "[]" );
+    ngx_conf_merge_str_value (conf->session_fields                  , prev->session_fields                  ,
+                              "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\",\"user_email\"]" );
+    ngx_conf_merge_value     (conf->session_ttl_extension            , prev->session_ttl_extension          ,        3600 );
+    /* gatekeeper */
+    ngx_conf_merge_str_value (conf->gatekeeper.config_file_uri       , prev->gatekeeper.config_file_uri     ,        "" );
+    // ... done ...
     return (char*) NGX_CONF_OK;
 }
 
@@ -986,7 +1065,7 @@ void ngx_http_websocket_module_idle_handler (ngx_event_t* a_ev)
         goto exception_caught;
     } catch (...) {
         //
-        exception_msg = "???";
+        exception_msg = "C++ Generic Exception: " + ngx::ws::NGXException::What(std::current_exception(), __FILE__, __LINE__);
         //
         goto exception_caught;
     }
@@ -1052,7 +1131,8 @@ static void ngx_http_websocket_module_timer_handler (ngx_event_t* a_ev)
         ngx_http_websocket_module_log_msg(data->request_ptr_, NGX_LOG_ERR, "[ngx_ws_module, 0x%p, IH] : *** EXCEPTION, %s",
                                           data->request_ptr_, exception_msg.c_str());
     } catch (...) {
-        exception_msg = "???";
+        //
+        exception_msg = "C++ Generic Exception: " + ngx::ws::NGXException::What(std::current_exception(), __FILE__, __LINE__);
         // log
         ngx_http_websocket_module_log_msg(data->request_ptr_, NGX_LOG_ERR, "[ngx_ws_module, 0x%p, IH] : *** EXCEPTION, %s",
                                           data->request_ptr_, exception_msg.c_str());
@@ -1203,6 +1283,8 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_postgresql_max_conn_per_worker_lc_, std::to_string(a_loc_conf->postgresql_max_conn_per_worker)));
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_postgresql_min_queries_per_conn_lc_, std::to_string(a_loc_conf->postgresql_min_queries_per_conn)));
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_postgresql_max_queries_per_conn_lc_, std::to_string(a_loc_conf->postgresql_max_queries_per_conn)));
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_curl_max_conn_per_worker_lc_,
+            std::to_string(a_loc_conf->curl_max_conn_per_worker)));
 
         if ( a_loc_conf->jrxml_base_directory.len > 0 ) {
             std::string jrxml_path = std::string(reinterpret_cast<char const*>(a_loc_conf->jrxml_base_directory.data), a_loc_conf->jrxml_base_directory.len);
@@ -1228,24 +1310,62 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         }
 
         // ... add beanstalk config ...
-        if ( a_loc_conf->beanstalkd_host.len > 0 ) {
-            const std::string beanstalkd_host = std::string(reinterpret_cast<char const*>(a_loc_conf->beanstalkd_host.data), a_loc_conf->beanstalkd_host.len);
+        if ( a_loc_conf->beanstalkd.host.len > 0 ) {
+            const std::string beanstalkd_host = std::string(reinterpret_cast<char const*>(a_loc_conf->beanstalkd.host.data), a_loc_conf->beanstalkd.host.len);
             config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_host_key_lc_, beanstalkd_host));
         }
-        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_port_key_lc_    , std::to_string(a_loc_conf->beanstalkd_port)));
-        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_ , std::to_string(a_loc_conf->beanstalkd_timeout)));
-
-        if ( a_loc_conf->beanstalkd_sessionless_tubes.len > 0 ) {
-            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_,
-                                              std::string(reinterpret_cast<char const*>(a_loc_conf->beanstalkd_sessionless_tubes.data), a_loc_conf->beanstalkd_sessionless_tubes.len)
-                               )
-            );
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_port_key_lc_    , std::to_string(a_loc_conf->beanstalkd.port)));
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_beanstalkd_timeout_key_lc_ , std::to_string(a_loc_conf->beanstalkd.timeout)));
+        const std::map<const char* const, const ngx_str_t*> beanstalk_conf_strings_map = {
+            { ngx::ws::AbstractWebsocketClient::k_beanstalkd_sessionless_tubes_key_lc_, &a_loc_conf->beanstalkd.tubes.sessionless },
+            { ngx::ws::AbstractWebsocketClient::k_beanstalkd_action_tubes_key_lc_     , &a_loc_conf->beanstalkd.tubes.action      }
+        };
+        for ( auto bcsm_it : beanstalk_conf_strings_map ) {
+            if ( bcsm_it.second->len > 0 ) {
+                config_map.insert(std::make_pair(bcsm_it.first,
+                                                 std::string(reinterpret_cast<char const*>(bcsm_it.second->data), bcsm_it.second->len)
+                 )
+               );
+            }
         }
-        
+                
         if ( a_loc_conf->logger_register_tokens.len > 0 ) {
             config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_,
                                              std::string(reinterpret_cast<char const*>(a_loc_conf->logger_register_tokens.data), a_loc_conf->logger_register_tokens.len)
                               )
+            );
+        }
+        
+        if ( a_loc_conf->data_source_overridable_sys_vars.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->data_source_overridable_sys_vars.data), a_loc_conf->data_source_overridable_sys_vars.len)
+                              )
+            );
+        }
+        
+        if ( a_loc_conf->http_requests_base_url_map.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->http_requests_base_url_map.data), a_loc_conf->http_requests_base_url_map.len)
+                                             )
+            );
+        }
+
+        if ( a_loc_conf->session_fields.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->session_fields.data), a_loc_conf->session_fields.len)
+                                             )
+                              );
+        }
+        
+        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_session_extension_amount_key_lc_,
+                                        std::to_string(static_cast<size_t>(a_loc_conf->session_ttl_extension))
+                                        )
+                          );
+        
+        if ( a_loc_conf->gatekeeper.config_file_uri.len > 0 ) {
+            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_gatekeeper_config_file_uri_key_lc_,
+                                             std::string(reinterpret_cast<char const*>(a_loc_conf->gatekeeper.config_file_uri.data), a_loc_conf->gatekeeper.config_file_uri.len)
+                                             )
             );
         }
 
@@ -1271,7 +1391,7 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         goto exception_caught;
     } catch (...) {
         //
-        exception_message = "???";
+        exception_message = "~Context::Setup~ - C++ Generic Exception: " + ngx::ws::NGXException::What(std::current_exception(), __FILE__, __LINE__);
         //
         goto exception_caught;
     }

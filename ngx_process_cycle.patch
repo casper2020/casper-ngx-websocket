@@ -3,9 +3,9 @@
 @@ -775,6 +775,7 @@
      }
  }
- 
-+extern void ngx_websocket_worker_hook (const ngx_core_conf_t* a_config);
- 
+
++extern void ngx_websocket_worker_hook (const ngx_core_conf_t* a_config, const ngx_cycle_t* a_cycle);
+
  static void
  ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 @@ -938,6 +939,8 @@
@@ -13,7 +13,5 @@
          exit(2);
      }
 +
-+    ngx_websocket_worker_hook(ccf);
++    ngx_websocket_worker_hook(ccf, cycle);
  }
- 
- 
