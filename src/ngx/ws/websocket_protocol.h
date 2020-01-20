@@ -985,10 +985,11 @@ namespace ngx
          */
         inline const unsigned char* IncomingMessage::UnchainPayload (size_t& o_length)
         {
-            o_length = 0;
             // we will only unchain payload if the message is complete
             if ( false == IsComplete() ) {
-                // message not complete, not pointer for you!
+                // message not complete
+                o_length = 0;
+                // not pointer for you!
                 return NULL;
             }
             //
