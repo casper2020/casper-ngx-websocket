@@ -758,7 +758,7 @@ static void ngx_http_websocket_module_read_handler (ngx_http_request_t* a_r)
             // got a complete frame?
             if ( true == frame_complete && false == message_fragmented ) {
                 //
-                size_t payload_len;
+                size_t payload_len = 0;
                 const unsigned char* payload_data = ( true == rx_message->IsFragmented() ? rx_message->UnchainPayload(payload_len) : rx_message->PayloadData(payload_len) );
                 //
                 switch ((ngx::ws::IncomingFrame::Opcodes)rx_message->Opcode()) {
