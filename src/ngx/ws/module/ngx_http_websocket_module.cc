@@ -600,7 +600,6 @@ ngx_int_t ngx_http_websocket_module_content_handler (ngx_http_request_t* a_r)
     a_r->write_event_handler = ngx_http_websocket_module_write_handler;
     // setup websocket module specific flags
     a_r->websocket_request    = 1;
-    a_r->websocket_subrequest = 0;
 
     /*
      * schedule idle event
