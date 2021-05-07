@@ -53,36 +53,17 @@ namespace ngx
 
             static const char* const k_websocket_protocol_header_key_lc_;
             static const char* const k_websocket_protocol_remote_ip_key_lc_;
-            static const char* const k_websocket_resources_root_key_lc_;
-            static const char* const k_websocket_logs_root_key_lc_;
             static const char* const k_websocket_http_file_server_host_key_lc_;
             static const char* const k_websocket_http_file_server_port_key_lc_;
-            static const char* const k_http_json_content_type_;
-            static const char* const k_redis_ip_address_key_lc_;
-            static const char* const k_redis_port_number_key_lc_;
-            static const char* const k_redis_database_key_lc_;
-            static const char* const k_redis_max_conn_per_worker_lc_;
-            static const char* const k_postgresql_conn_str_key_lc_;
-            static const char* const k_postgresql_statement_timeout_lc_;
-            static const char* const k_postgresql_post_connect_queries_lc_;
-            static const char* const k_postgresql_max_conn_per_worker_lc_;
-            static const char* const k_postgresql_min_queries_per_conn_lc_;
-            static const char* const k_postgresql_max_queries_per_conn_lc_;
-            static const char* const k_curl_max_conn_per_worker_lc_;
+            static const char* const k_http_json_content_type_;            
             static const char* const k_json_api_url_key_lc_;
             static const char* const k_jrxml_base_directory_key_lc_;
             static const char* const k_service_id_lc_;
-            static const char* const k_beanstalkd_host_key_lc_;
-            static const char* const k_beanstalkd_port_key_lc_;
-            static const char* const k_beanstalkd_timeout_key_lc_;
-            static const char* const k_beanstalkd_sessionless_tubes_key_lc_;
-            static const char* const k_beanstalkd_action_tubes_key_lc_;
             static const char* const k_logger_register_tokens_key_lc_;
             static const char* const k_data_source_overridable_sys_vars_lc_;
             static const char* const k_http_base_url_map_key_lc_;
             static const char* const k_session_fields_key_lc_;
             static const char* const k_session_extension_amount_key_lc_;
-            static const char* const k_gatekeeper_config_file_uri_key_lc_;
 
         protected: // Data
 
