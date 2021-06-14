@@ -290,7 +290,7 @@ namespace ngx
         public: // Methods
 
             Context (ngx_module_t& a_module, ngx_http_request_t* a_http_request,
-                     const std::string& a_service_id, const std::map<std::string, std::string>& a_config,
+                     const std::map<std::string, std::string>& a_config,
                      ngx::ws::Context::Writer* a_writer,
                      ngx::ws::Context::TimerManager* a_timer_manager);
             virtual ~Context ();

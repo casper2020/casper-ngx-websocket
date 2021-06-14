@@ -27,8 +27,6 @@
 // public static data
 const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_       = "sec-websocket-protocol";
 const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_    = "remote-ip";
-const char* const ngx::ws::AbstractWebsocketClient::k_websocket_http_file_server_host_key_lc_ = "http_file_server_host";
-const char* const ngx::ws::AbstractWebsocketClient::k_websocket_http_file_server_port_key_lc_ = "http_file_server_port";
 const char* const ngx::ws::AbstractWebsocketClient::k_http_json_content_type_                 = "application/json; charset=utf-8";
 
 const char* const ngx::ws::AbstractWebsocketClient::k_json_api_url_key_lc_                    = "json_api_url";
@@ -36,10 +34,9 @@ const char* const ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_l
 
 const char* const ngx::ws::AbstractWebsocketClient::k_service_id_lc_                          = "service_id";
 
-const char* const ngx::ws::AbstractWebsocketClient::k_logger_register_tokens_key_lc_          = "logger_register_tokens";
 const char* const ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_    = "data_source_overridable_sys_vars";
 
-const char* const ngx::ws::AbstractWebsocketClient::k_http_base_url_map_key_lc_               = "http_base_url_map";
+const char* const ngx::ws::AbstractWebsocketClient::k_http_acceptable_base_urls_key_lc_       = "http_base_url_map";
 
 const char* const ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_                  = "session_fields";
 const char* const ngx::ws::AbstractWebsocketClient::k_session_extension_amount_key_lc_        = "session_extension_amount";

@@ -30,11 +30,10 @@
  * @brief Default constructor.
  */
 ngx::ws::Context::Context (ngx_module_t& a_module, ngx_http_request_t* a_http_request,
-                           const std::string& a_service_id,
                            const std::map<std::string, std::string>& a_config,
                            ngx::ws::Context::Writer* a_writer,
                            ngx::ws::Context::TimerManager* a_timer_manager)
-    : module_(a_module), http_request_(a_http_request), service_id_(a_service_id), config_(a_config)
+    : module_(a_module), http_request_(a_http_request), config_(a_config)
 {
     writer_ptr_           = a_writer;
     timer_manager_ptr_    = a_timer_manager;

@@ -53,15 +53,16 @@ namespace ngx
 
             static const char* const k_websocket_protocol_header_key_lc_;
             static const char* const k_websocket_protocol_remote_ip_key_lc_;
-            static const char* const k_websocket_http_file_server_host_key_lc_;
-            static const char* const k_websocket_http_file_server_port_key_lc_;
-            static const char* const k_http_json_content_type_;            
+            static const char* const k_http_json_content_type_;
+            
             static const char* const k_json_api_url_key_lc_;
             static const char* const k_jrxml_base_directory_key_lc_;
+            
             static const char* const k_service_id_lc_;
-            static const char* const k_logger_register_tokens_key_lc_;
             static const char* const k_data_source_overridable_sys_vars_lc_;
-            static const char* const k_http_base_url_map_key_lc_;
+            
+            static const char* const k_http_acceptable_base_urls_key_lc_;
+            
             static const char* const k_session_fields_key_lc_;
             static const char* const k_session_extension_amount_key_lc_;
 

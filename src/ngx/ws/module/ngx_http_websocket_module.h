@@ -40,62 +40,12 @@ extern "C" {
 #pragma mark - NGINX websocket module loc_conf_t
 #endif
 
-/* REDIS data types */
-typedef struct {
-    ngx_str_t ip_address;          //!<
-    ngx_int_t port_number;         //!<
-    ngx_int_t database;            //!<
-    ngx_int_t max_conn_per_worker; //!<
-} ngx_http_casper_redis_conf_t;
-
-/* BEANSTALKD data types */
-
-typedef struct {
-    ngx_str_t  action;         //!<
-    ngx_str_t  sessionless;    //!<
-} ngx_http_casper_beanstalk_tubes_conf_t;
-
-typedef struct {
-    ngx_str_t  host;                              //!<
-    ngx_uint_t port;                              //!<
-    ngx_int_t  timeout;                           //!<
-    ngx_http_casper_beanstalk_tubes_conf_t tubes; //!<
-} ngx_http_casper_beanstalk_conf_t;
-typedef struct {
-    ngx_str_t config_file_uri;
-} ngx_http_casper_gatekeeper_conf_t;
-
-/* POSTGRESQL data types */
-typedef struct {
-    ngx_str_t conn_str;              //!<
-    ngx_int_t statement_timeout;     //!<
-    ngx_int_t max_conn_per_worker;   //!<
-    ngx_int_t max_queries_per_conn;  //!<
-    ngx_int_t min_queries_per_conn;  //!<
-} ngx_http_casper_postgresql_conf_t;
-
-/* cURL data types*/
-typedef struct {
-    ngx_int_t max_conn_per_worker;         //!<
-} ngx_http_casper_curl_conf_t;
+#include "ngx/ws/config.h"
 
 /**
  * @brief Module 'srv' configuration structure, applicable to a location scope
  */
-typedef struct {
-    /* redis */
-    ngx_http_casper_redis_conf_t      redis;
-    /* postgresql */
-    ngx_http_casper_postgresql_conf_t postgresql;
-    /* beanstalkd */
-    ngx_http_casper_beanstalk_conf_t  beanstalkd;
-    /* curl */
-    ngx_http_casper_curl_conf_t       curl;
-    /* gatekeepr */
-    ngx_http_casper_gatekeeper_conf_t gatekeeper;
-    /* jrxml */
-    ngx_uint_t                        jrxml_js_cache_validity_;
-} ngx_http_websocket_module_main_conf_t;
+typedef nginx_epaper_service_conf_t ngx_http_websocket_module_main_conf_t;
 
 /**
  * @brief Module 'local' configuration structure, applicable to a location scope
@@ -104,16 +54,12 @@ typedef struct {
     ngx_flag_t                              enable;                           //!< flag that enables the module
     ngx_int_t                               ping_period;                      //!< the number of seconds between pings
     ngx_int_t                               idle_timeout;                     //!< the maximum number of seconds without exchanging data messages
-    ngx_str_t                               http_file_server_host;            //!< Hostname or ip of the http server that distributes the PDF files that stored on the local filesystem
-    ngx_int_t                               http_file_server_port;            //!< Port of the http server that distributes the PDF files that stored on the local filesystem
-    ngx_str_t                               json_api_url;                     //!<
-    ngx_str_t                               jrxml_base_directory;             //!<
-    ngx_str_t                               service_id;                       //!<
-    ngx_str_t                               logger_register_tokens;           //!<
-    ngx_str_t                               data_source_overridable_sys_vars; //!<
-    ngx_str_t                               http_requests_base_url_map;
-    ngx_str_t                               session_fields;
-    ngx_uint_t                              session_ttl_extension;
+    
+    nginx_epaper_casper_session_conf_t     session;
+    nginx_epaper_casper_jsonapi_conf_t     jsonapi;
+    nginx_epaper_casper_http_conf_t        http;
+    nginx_epaper_casper_data_source_conf_t data;
+    nginx_epaper_casper_editor_conf_t      editor;    
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;
@@ -1126,11 +1072,11 @@ namespace ngx {
         public: // constructor / destructor
 
             NGXContext (ngx_module_t& a_module, ngx_http_request_t* a_http_request,
-                        const std::string& a_service_id, const std::map<std::string, std::string>& a_config,
+                        const std::map<std::string, std::string>& a_config,
                         ngx::ws::Context::Writer* a_writer,
                         ngx::ws::NGXTimerManager* a_timer_manager_issuer)
             : ngx::ws::Context(a_module, a_http_request,
-                               a_service_id, a_config,
+                               a_config,
                                a_writer,
                                a_timer_manager_issuer)
             {
