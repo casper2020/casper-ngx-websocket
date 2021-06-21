@@ -27,6 +27,8 @@
 
 #include "ev/ngx/includes.h"
 
+#include "json/json.h"
+
 #include <string>
 #include <map>
 
@@ -79,6 +81,7 @@ typedef struct {
 typedef struct {
     ngx_str_t  fields;
     ngx_uint_t ttl_extension;
+    ngx_str_t  return_fields;
 } nginx_epaper_casper_session_conf_t;
 
 /* JSONAPI data types */
@@ -101,34 +104,37 @@ typedef struct {
     ngx_str_t jrxml_directory;
 } nginx_epaper_casper_editor_conf_t;
 
+/*
+ * EPAPER Config.
+ */
+typedef struct {
+    /* jrxml */
+    nginx_epaper_jrxml_conf_t          jrxml;
+    /* casper session */
+    nginx_epaper_casper_session_conf_t session;
+} ngx_http_websocket_epaper_config;
+
 /**
  * @brief Module 'srv' configuration structure, applicable to a location scope
  */
 typedef struct {
     /* service */
-    ngx_str_t                      service_id;
+    ngx_str_t                          service_id;
     /* redis */
-    nginx_epaper_redis_conf_t      redis;
+    nginx_epaper_redis_conf_t          redis;
     /* postgresql */
-    nginx_epaper_postgresql_conf_t postgresql;
+    nginx_epaper_postgresql_conf_t     postgresql;
     /* beanstalkd */
-    nginx_epaper_beanstalk_conf_t  beanstalkd;
+    nginx_epaper_beanstalk_conf_t      beanstalkd;
     /* curl */
-    nginx_epaper_curl_conf_t       curl;
-    /* gatekeepr */
-    nginx_epaper_gatekeeper_conf_t gatekeeper;
-    /* jrxml */
-    nginx_epaper_jrxml_conf_t      jrxml;
+    nginx_epaper_curl_conf_t           curl;
+    /* gatekeeper */
+    nginx_epaper_gatekeeper_conf_t     gatekeeper;
+    /* global epaper 'casper' context config */
+    ngx_http_websocket_epaper_config   epaper;
     /* legacy debug trace ( OSAL ) */
-    ngx_str_t                      legacy_logger_enabled_debug_tokens;
+    ngx_str_t                          legacy_logger_enabled_debug_tokens;
 } nginx_epaper_service_conf_t;
-
-/*
- * EPAPER Config.
- */
-typedef struct {
-    
-} ngx_http_websocket_epaper_config;
 
 namespace ngx
 {
@@ -189,13 +195,24 @@ namespace ngx
                 size_t      js_cache_validity_;
             } JRXMLConfig;
             
+            typedef struct {
+                Json::Value fields_;
+                uint64_t    ttl_extension_;
+                Json::Value return_fields_;
+            } SessionConfig;
+            
+            typedef struct {
+                SessionConfig session_;
+            } EPAPERConfig;
+            
             typedef std::map<std::string, std::string> Map;
 
         private: // Data
             
-            Service     service_;
-            Map         map_;
-            JRXMLConfig jrxml_config_;
+            Service      service_;
+            Map          map_;
+            JRXMLConfig  jrxml_config_;
+            EPAPERConfig epaper_config_;
 
         public: // Method(s) / Function(s)
             
@@ -206,6 +223,8 @@ namespace ngx
             inline const Service& service() const { return service_; }
             
             inline const JRXMLConfig& jrxml_config () const { return jrxml_config_; };
+            
+            inline const EPAPERConfig& epaper_config () const { return epaper_config_; };
             
             inline const Map& map() const { return map_; }
             

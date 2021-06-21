@@ -98,7 +98,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NULL
     },
     {
-        ngx_string("nginx_websocket_ping_period"),                    /* directive name */
+        ngx_string("nginx_websocket_ping_period"),
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_size_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
@@ -106,7 +106,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NULL
     },
     {
-        ngx_string("nginx_websocket_idle_timeout"),                   /* directive name */
+        ngx_string("nginx_websocket_idle_timeout"),
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_size_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
@@ -116,23 +116,6 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
     /*
      * local
      */
-    /* session */
-    {
-        ngx_string("nginx_epaper_casper_session_fields"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, session.fields),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_casper_session_ttl_extension"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, session.ttl_extension),
-        NULL
-    },
     /* jsonapi */
     {
         ngx_string("nginx_epaper_casper_jsonapi_url"),
@@ -153,7 +136,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
     },
     /* data source */
     {
-        ngx_string("nginx_epaper_casper_data_source_overridable_sys_vars"),     /* directive name */
+        ngx_string("nginx_epaper_casper_data_source_overridable_sys_vars"),
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
@@ -161,7 +144,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NULL
     },
     {
-        ngx_string("nginx_epaper_casper_editor_jrxml_directory"),          /* directive name */
+        ngx_string("nginx_epaper_casper_editor_jrxml_directory"),
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_LOC_CONF_OFFSET,
@@ -319,7 +302,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, jrxml.directory),
+        offsetof(ngx_http_websocket_module_main_conf_t, epaper.jrxml.directory),
         NULL
     },
     {
@@ -327,7 +310,32 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
         ngx_conf_set_num_slot,
         NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, jrxml.js_cache_validity),
+        offsetof(ngx_http_websocket_module_main_conf_t, epaper.jrxml.js_cache_validity),
+        NULL
+    },
+    /* session */
+    {
+        ngx_string("nginx_epaper_casper_session_fields"),
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_main_conf_t, epaper.session.fields),
+        NULL
+    },
+    {
+        ngx_string("nginx_epaper_casper_session_ttl_extension"),
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_num_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_main_conf_t, epaper.session.ttl_extension),
+        NULL
+    },
+    {
+        ngx_string("nginx_epaper_casper_session_return_fields"),
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_main_conf_t, epaper.session.return_fields),
         NULL
     },
     /* legacy debug trace ( OSAL ) */
@@ -413,9 +421,16 @@ static void* ngx_http_websocket_module_create_main_conf (ngx_conf_t* a_cf)
     conf->curl.max_conn_per_worker           = NGX_CONF_UNSET;
     /* gatekeeper */
     conf->gatekeeper.config_file_uri         = ngx_null_string;
-    /* jrxml */
-    conf->jrxml.directory                    = ngx_null_string;
-    conf->jrxml.js_cache_validity            = NGX_CONF_UNSET;
+    /* epaper.jrxml */
+    conf->epaper.jrxml.directory             = ngx_null_string;
+    conf->epaper.jrxml.js_cache_validity     = NGX_CONF_UNSET;
+    /* epaper.jrxml */
+    conf->epaper.jrxml.directory             = ngx_null_string;
+    conf->epaper.jrxml.js_cache_validity     = NGX_CONF_UNSET;
+    /* epaper.jrxml */
+    conf->epaper.session.fields              = ngx_null_string;
+    conf->epaper.session.ttl_extension       = NGX_CONF_UNSET;
+    conf->epaper.session.return_fields       = ngx_null_string;
     /* legacy debug trace ( OSAL ) */
     conf->legacy_logger_enabled_debug_tokens = ngx_null_string;
     // ... done ...
@@ -462,8 +477,12 @@ static char* ngx_http_websocket_module_init_main_conf (ngx_conf_t* a_cf, void* a
     /* gatekeeper */
     cws_conf_init_str_value (conf->gatekeeper.config_file_uri        ,          "" );
     /* jrxml */
-    cws_conf_init_str_value (conf->jrxml.directory                   ,         "" );
-    ngx_conf_init_uint_value(conf->jrxml.js_cache_validity           ,        86400); // 1 day
+    cws_conf_init_str_value (conf->epaper.jrxml.directory            ,         "" );
+    ngx_conf_init_uint_value(conf->epaper.jrxml.js_cache_validity    ,        86400); // 1 day
+    /* session */
+    cws_conf_init_str_value (conf->epaper.session.fields             ,        "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\",\"user_email\"]" );
+    ngx_conf_init_uint_value(conf->epaper.session.ttl_extension      ,        3600 );
+    cws_conf_init_str_value (conf->epaper.session.return_fields      ,        "[]" );
     /* legacy debug trace ( OSAL ) */
     cws_conf_init_str_value (conf->legacy_logger_enabled_debug_tokens,        "[]" );
     // ... done ...
@@ -485,9 +504,6 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->enable                    = NGX_CONF_UNSET;
     conf->ping_period               = NGX_CONF_UNSET;
     conf->idle_timeout              = NGX_CONF_UNSET;
-    /* session */
-    conf->session.fields            = ngx_null_string;
-    conf->session.ttl_extension     = NGX_CONF_UNSET;
     /* jsonapi */
     conf->jsonapi.url               = ngx_null_string;
     /* http */
@@ -511,10 +527,6 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_value     (conf->enable                          , prev->enable                          ,          0 ); //       0 - disabled
     ngx_conf_merge_value     (conf->ping_period                     , prev->ping_period                     ,         30 ); //      30 - 30s
     ngx_conf_merge_value     (conf->idle_timeout                    , prev->idle_timeout                    ,    15 * 60 ); // 15 * 60 - 15m
-    /* session */
-    ngx_conf_merge_str_value (conf->session.fields                  , prev->session.fields                  ,
-                              "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\",\"user_email\"]" );
-    ngx_conf_merge_value     (conf->session.ttl_extension            , prev->session.ttl_extension          ,        3600 );
     /* jsonapi */
     ngx_conf_merge_str_value (conf->jsonapi.url                      , prev->jsonapi.url                    ,        "" );
     /* http */
@@ -1307,19 +1319,7 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
                                              )
             );
         }
-
-        if ( a_loc_conf->session.fields.len > 0 ) {
-            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_session_fields_key_lc_,
-                                             std::string(reinterpret_cast<char const*>(a_loc_conf->session.fields.data), a_loc_conf->session.fields.len)
-                                             )
-                              );
-        }
-        
-        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_session_extension_amount_key_lc_,
-                                        std::to_string(static_cast<size_t>(a_loc_conf->session.ttl_extension))
-                                        )
-                          );
-
+          
         // create context
         context = new ngx::ws::NGXContext(ngx_http_websocket_module, a_r,
                                           config_map,

@@ -51,11 +51,10 @@ typedef nginx_epaper_service_conf_t ngx_http_websocket_module_main_conf_t;
  * @brief Module 'local' configuration structure, applicable to a location scope
  */
 typedef struct {
-    ngx_flag_t                              enable;                           //!< flag that enables the module
-    ngx_int_t                               ping_period;                      //!< the number of seconds between pings
-    ngx_int_t                               idle_timeout;                     //!< the maximum number of seconds without exchanging data messages
+    ngx_flag_t                             enable;                           //!< flag that enables the module
+    ngx_int_t                              ping_period;                      //!< the number of seconds between pings
+    ngx_int_t                              idle_timeout;                     //!< the maximum number of seconds without exchanging data messages
     
-    nginx_epaper_casper_session_conf_t     session;
     nginx_epaper_casper_jsonapi_conf_t     jsonapi;
     nginx_epaper_casper_http_conf_t        http;
     nginx_epaper_casper_data_source_conf_t data;

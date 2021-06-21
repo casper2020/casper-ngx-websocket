@@ -62,9 +62,6 @@ namespace ngx
             static const char* const k_data_source_overridable_sys_vars_lc_;
             
             static const char* const k_http_acceptable_base_urls_key_lc_;
-            
-            static const char* const k_session_fields_key_lc_;
-            static const char* const k_session_extension_amount_key_lc_;
 
         protected: // Data
 

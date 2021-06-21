@@ -23,6 +23,9 @@
 
 #include "cc/fs/dir.h"
 
+#include "cc/easy/json.h"
+#include "cc/exception.h"
+
 // MARK: - OneShotInitializer
 
 ngx::ws::ConfigOneShotInitializer::ConfigOneShotInitializer (ngx::ws::Config& a_instance)
@@ -33,6 +36,10 @@ ngx::ws::ConfigOneShotInitializer::ConfigOneShotInitializer (ngx::ws::Config& a_
     /* jrmxl */
     a_instance.jrxml_config_.jrxml_dir_         = "";
     a_instance.jrxml_config_.js_cache_validity_ = 86400; // 24h
+    /* epaper */
+    a_instance.epaper_config_.session_.fields_        = Json::Value(Json::ValueType::arrayValue);
+    a_instance.epaper_config_.session_.ttl_extension_ = 0;
+    a_instance.epaper_config_.session_.return_fields_ = Json::Value(Json::ValueType::arrayValue);
 }
 
 ngx::ws::ConfigOneShotInitializer::~ConfigOneShotInitializer ()
@@ -119,8 +126,25 @@ void ngx::ws::Config::Load (const nginx_epaper_service_conf_t* a_config)
     map_[ngx::ws::Config::k_gatekeeper_config_file_uri_key_lc_]
         = std::string(reinterpret_cast<char const*>(a_config->gatekeeper.config_file_uri.data), a_config->gatekeeper.config_file_uri.len);
     /* jrxml */
-    if ( a_config->jrxml.directory.len > 0 ) {
-        jrxml_config_.jrxml_dir_ = ::cc::fs::Dir::Normalize(std::string(reinterpret_cast<char const*>(a_config->jrxml.directory.data), a_config->jrxml.directory.len));
+    if ( a_config->epaper.jrxml.directory.len > 0 ) {
+        jrxml_config_.jrxml_dir_ = ::cc::fs::Dir::Normalize(std::string(reinterpret_cast<char const*>(a_config->epaper.jrxml.directory.data), a_config->epaper.jrxml.directory.len));
     }
-    jrxml_config_.js_cache_validity_ = static_cast<size_t>(a_config->jrxml.js_cache_validity);
+    jrxml_config_.js_cache_validity_ = static_cast<size_t>(a_config->epaper.jrxml.js_cache_validity);
+    /* session */
+    // ... ttl ...
+    epaper_config_.session_.ttl_extension_ = static_cast<size_t>(a_config->epaper.session.ttl_extension);
+    // ... fields ....
+    if ( a_config->epaper.session.fields.len > 0 ) {
+        const ::cc::easy::JSON<::cc::Exception> json;
+        json.Parse(std::string(reinterpret_cast<char const*>(a_config->epaper.session.fields.data), a_config->epaper.session.fields.len),
+                   epaper_config_.session_.fields_
+        );
+    }
+    // ... return fields ...
+    if ( a_config->epaper.session.return_fields.len > 0 ) {
+        const ::cc::easy::JSON<::cc::Exception> json;
+        json.Parse(std::string(reinterpret_cast<char const*>(a_config->epaper.session.return_fields.data), a_config->epaper.session.return_fields.len),
+                   epaper_config_.session_.return_fields_
+        );
+    }    
 }
