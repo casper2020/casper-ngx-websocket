@@ -32,14 +32,7 @@ ngx::ws::ConfigOneShotInitializer::ConfigOneShotInitializer (ngx::ws::Config& a_
     : ::cc::Initializer<ngx::ws::Config>(a_instance)
 {
     /* service */
-    a_instance.service_.id_                     = "";
-    /* jrmxl */
-    a_instance.jrxml_config_.jrxml_dir_         = "";
-    a_instance.jrxml_config_.js_cache_validity_ = 86400; // 24h
-    /* epaper */
-    a_instance.epaper_config_.session_.fields_        = Json::Value(Json::ValueType::arrayValue);
-    a_instance.epaper_config_.session_.ttl_extension_ = 0;
-    a_instance.epaper_config_.session_.return_fields_ = Json::Value(Json::ValueType::arrayValue);
+    a_instance.service_.id_ = "";
 }
 
 ngx::ws::ConfigOneShotInitializer::~ConfigOneShotInitializer ()
@@ -48,7 +41,6 @@ ngx::ws::ConfigOneShotInitializer::~ConfigOneShotInitializer ()
 }
 
 // MARK: - Config
-
 
 const char* const ngx::ws::Config::k_redis_ip_address_key_lc_                = "redis_ip_address";
 const char* const ngx::ws::Config::k_redis_port_number_key_lc_               = "redis_port_number";
@@ -79,6 +71,7 @@ const char* const ngx::ws::Config::k_gatekeeper_config_file_uri_key_lc_      = "
  */
 void ngx::ws::Config::Load (const nginx_epaper_service_conf_t* a_config)
 {
+    const ::cc::easy::JSON<::cc::Exception> json;
     /* service */
     service_.id_ = std::string(reinterpret_cast<char const*>(a_config->service_id.data), a_config->service_id.len);
     /* redis */
@@ -125,26 +118,4 @@ void ngx::ws::Config::Load (const nginx_epaper_service_conf_t* a_config)
     /* gatekeeper */
     map_[ngx::ws::Config::k_gatekeeper_config_file_uri_key_lc_]
         = std::string(reinterpret_cast<char const*>(a_config->gatekeeper.config_file_uri.data), a_config->gatekeeper.config_file_uri.len);
-    /* jrxml */
-    if ( a_config->epaper.jrxml.directory.len > 0 ) {
-        jrxml_config_.jrxml_dir_ = ::cc::fs::Dir::Normalize(std::string(reinterpret_cast<char const*>(a_config->epaper.jrxml.directory.data), a_config->epaper.jrxml.directory.len));
-    }
-    jrxml_config_.js_cache_validity_ = static_cast<size_t>(a_config->epaper.jrxml.js_cache_validity);
-    /* session */
-    // ... ttl ...
-    epaper_config_.session_.ttl_extension_ = static_cast<size_t>(a_config->epaper.session.ttl_extension);
-    // ... fields ....
-    if ( a_config->epaper.session.fields.len > 0 ) {
-        const ::cc::easy::JSON<::cc::Exception> json;
-        json.Parse(std::string(reinterpret_cast<char const*>(a_config->epaper.session.fields.data), a_config->epaper.session.fields.len),
-                   epaper_config_.session_.fields_
-        );
-    }
-    // ... return fields ...
-    if ( a_config->epaper.session.return_fields.len > 0 ) {
-        const ::cc::easy::JSON<::cc::Exception> json;
-        json.Parse(std::string(reinterpret_cast<char const*>(a_config->epaper.session.return_fields.data), a_config->epaper.session.return_fields.len),
-                   epaper_config_.session_.return_fields_
-        );
-    }    
 }

@@ -27,16 +27,8 @@
 // public static data
 const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_       = "sec-websocket-protocol";
 const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_    = "remote-ip";
-const char* const ngx::ws::AbstractWebsocketClient::k_http_json_content_type_                 = "application/json; charset=utf-8";
 
-const char* const ngx::ws::AbstractWebsocketClient::k_json_api_url_key_lc_                    = "json_api_url";
 const char* const ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_lc_            = "jrxml_base_directory";
-
-const char* const ngx::ws::AbstractWebsocketClient::k_service_id_lc_                          = "service_id";
-
-const char* const ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_    = "data_source_overridable_sys_vars";
-
-const char* const ngx::ws::AbstractWebsocketClient::k_http_acceptable_base_urls_key_lc_       = "http_base_url_map";
 
 #ifdef __APPLE__
 #pragma mark - AbstractWebsocketClient: Registry

@@ -55,9 +55,6 @@ typedef struct {
     ngx_int_t                              ping_period;                      //!< the number of seconds between pings
     ngx_int_t                              idle_timeout;                     //!< the maximum number of seconds without exchanging data messages
     
-    nginx_epaper_casper_jsonapi_conf_t     jsonapi;
-    nginx_epaper_casper_http_conf_t        http;
-    nginx_epaper_casper_data_source_conf_t data;
     nginx_epaper_casper_editor_conf_t      editor;    
 } ngx_http_websocket_module_loc_conf_t;
 

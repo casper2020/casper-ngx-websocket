@@ -115,34 +115,7 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
     },
     /*
      * local
-     */
-    /* jsonapi */
-    {
-        ngx_string("nginx_epaper_casper_jsonapi_url"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, jsonapi.url),
-        NULL
-    },
-    /* http */
-    {
-        ngx_string("nginx_epaper_casper_http_acceptable_base_urls"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, http),
-        NULL
-    },
-    /* data source */
-    {
-        ngx_string("nginx_epaper_casper_data_source_overridable_sys_vars"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, data.overridable_sys_vars),
-        NULL
-    },
+     */    
     {
         ngx_string("nginx_epaper_casper_editor_jrxml_directory"),
         NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
@@ -313,6 +286,15 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         offsetof(ngx_http_websocket_module_main_conf_t, epaper.jrxml.js_cache_validity),
         NULL
     },
+    /* data source */
+    {
+        ngx_string("nginx_epaper_data_source_overridable_sys_vars"),
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_main_conf_t, epaper.data_source.overridable_sys_vars),
+        NULL
+    },
     /* session */
     {
         ngx_string("nginx_epaper_casper_session_fields"),
@@ -322,6 +304,25 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         offsetof(ngx_http_websocket_module_main_conf_t, epaper.session.fields),
         NULL
     },
+    /* jsonapi */
+    {
+        ngx_string("nginx_epaper_jsonapi_url"),
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_main_conf_t, jsonapi.url),
+        NULL
+    },
+    /* http */
+    {
+        ngx_string("nginx_epaper_http_acceptable_base_urls"),
+        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_HTTP_MAIN_CONF_OFFSET,
+        offsetof(ngx_http_websocket_module_main_conf_t, http),
+        NULL
+    },
+    /* epaper */
     {
         ngx_string("nginx_epaper_casper_session_ttl_extension"),
         NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
@@ -421,16 +422,19 @@ static void* ngx_http_websocket_module_create_main_conf (ngx_conf_t* a_cf)
     conf->curl.max_conn_per_worker           = NGX_CONF_UNSET;
     /* gatekeeper */
     conf->gatekeeper.config_file_uri         = ngx_null_string;
+    /* jsonapi */
+    conf->jsonapi.url                        = ngx_null_string;
+    /* http */
+    conf->http.acceptable                    = ngx_null_string;
     /* epaper.jrxml */
-    conf->epaper.jrxml.directory             = ngx_null_string;
-    conf->epaper.jrxml.js_cache_validity     = NGX_CONF_UNSET;
-    /* epaper.jrxml */
-    conf->epaper.jrxml.directory             = ngx_null_string;
-    conf->epaper.jrxml.js_cache_validity     = NGX_CONF_UNSET;
-    /* epaper.jrxml */
-    conf->epaper.session.fields              = ngx_null_string;
-    conf->epaper.session.ttl_extension       = NGX_CONF_UNSET;
-    conf->epaper.session.return_fields       = ngx_null_string;
+    conf->epaper.jrxml.directory                  = ngx_null_string;
+    conf->epaper.jrxml.js_cache_validity          = NGX_CONF_UNSET;
+    /* epaper.data_source */
+    conf->epaper.data_source.overridable_sys_vars = ngx_null_string;
+    /* epaper.session */
+    conf->epaper.session.fields                   = ngx_null_string;
+    conf->epaper.session.ttl_extension            = NGX_CONF_UNSET;
+    conf->epaper.session.return_fields            = ngx_null_string;
     /* legacy debug trace ( OSAL ) */
     conf->legacy_logger_enabled_debug_tokens = ngx_null_string;
     // ... done ...
@@ -476,9 +480,15 @@ static char* ngx_http_websocket_module_init_main_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_init_value     (conf->curl.max_conn_per_worker          ,          10 );
     /* gatekeeper */
     cws_conf_init_str_value (conf->gatekeeper.config_file_uri        ,          "" );
+    /* jsonapi */
+    cws_conf_init_str_value (conf->jsonapi.url                       ,        "" );
+    /* http */
+    cws_conf_init_str_value (conf->http.acceptable                   ,      "[]" );
     /* jrxml */
-    cws_conf_init_str_value (conf->epaper.jrxml.directory            ,         "" );
-    ngx_conf_init_uint_value(conf->epaper.jrxml.js_cache_validity    ,        86400); // 1 day
+    cws_conf_init_str_value (conf->epaper.jrxml.directory                 ,         "" );
+    ngx_conf_init_uint_value(conf->epaper.jrxml.js_cache_validity         ,        86400); // 1 day
+    /* data source */
+    cws_conf_init_str_value (conf->epaper.data_source.overridable_sys_vars,        "[]" );
     /* session */
     cws_conf_init_str_value (conf->epaper.session.fields             ,        "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\",\"user_email\"]" );
     ngx_conf_init_uint_value(conf->epaper.session.ttl_extension      ,        3600 );
@@ -504,12 +514,6 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
     conf->enable                    = NGX_CONF_UNSET;
     conf->ping_period               = NGX_CONF_UNSET;
     conf->idle_timeout              = NGX_CONF_UNSET;
-    /* jsonapi */
-    conf->jsonapi.url               = ngx_null_string;
-    /* http */
-    conf->http.acceptable           = ngx_null_string;
-    /* data source */
-    conf->data.overridable_sys_vars = ngx_null_string;
     /* editor */
     conf->editor.jrxml_directory    = ngx_null_string;
     // ... done ...
@@ -527,12 +531,6 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_conf_merge_value     (conf->enable                          , prev->enable                          ,          0 ); //       0 - disabled
     ngx_conf_merge_value     (conf->ping_period                     , prev->ping_period                     ,         30 ); //      30 - 30s
     ngx_conf_merge_value     (conf->idle_timeout                    , prev->idle_timeout                    ,    15 * 60 ); // 15 * 60 - 15m
-    /* jsonapi */
-    ngx_conf_merge_str_value (conf->jsonapi.url                      , prev->jsonapi.url                    ,        "" );
-    /* http */
-    ngx_conf_merge_str_value (conf->http.acceptable                 , prev->http.acceptable                 ,      "[]" );
-    /* data source */
-    ngx_conf_merge_str_value (conf->data.overridable_sys_vars       , prev->data.overridable_sys_vars       ,      "[]" );
     /* editor */
     ngx_conf_merge_str_value (conf->editor.jrxml_directory         , prev->editor.jrxml_directory           ,        "" );
     // ... done ...
@@ -1289,13 +1287,7 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
         // add protocol
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_, a_protocol));
         config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_, a_remote_ip));       
-       
-        // ... add json api config ...
-        if ( a_loc_conf->jsonapi.url.len > 0 ) {
-            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_json_api_url_key_lc_,
-                                             std::string(reinterpret_cast<char const*>(a_loc_conf->jsonapi.url.data), a_loc_conf->jsonapi.url.len))
-            );
-        }
+               
 
         // ... add JRXML base dir config ...
         if ( a_loc_conf->editor.jrxml_directory.len > 0 ) {
@@ -1304,20 +1296,6 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
                 jrxml_path +=  "/";
             }
             config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_lc_, jrxml_path));
-        }
-              
-        if ( a_loc_conf->data.overridable_sys_vars.len > 0 ) {
-            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_data_source_overridable_sys_vars_lc_,
-                                             std::string(reinterpret_cast<char const*>(a_loc_conf->data.overridable_sys_vars.data), a_loc_conf->data.overridable_sys_vars.len)
-                              )
-            );
-        }
-        
-        if ( a_loc_conf->http.acceptable.len > 0 ) {
-            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_http_acceptable_base_urls_key_lc_,
-                                             std::string(reinterpret_cast<char const*>(a_loc_conf->http.acceptable.data), a_loc_conf->http.acceptable.len)
-                                             )
-            );
         }
           
         // create context
