@@ -44,9 +44,9 @@ extern "C" {
  * @brief Module 'local' configuration structure, applicable to a location scope
  */
 typedef struct {
-    ngx_flag_t                             enable;                           //!< flag that enables the module
-    ngx_int_t                              ping_period;                      //!< the number of seconds between pings
-    ngx_int_t                              idle_timeout;                     //!< the maximum number of seconds without exchanging data messages
+    ngx_flag_t enable;       //!< flag that enables the module
+    ngx_int_t  ping_period;  //!< the number of seconds between pings
+    ngx_int_t  idle_timeout; //!< the maximum number of seconds without exchanging data messages
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;
