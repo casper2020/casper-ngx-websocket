@@ -282,25 +282,56 @@ namespace ngx
 
             ngx::ws::AbstractWebsocketClient*        client_;
 
-        public: // Const Data
-
-            const std::string                        service_id_;
-            const std::map<std::string, std::string> config_;
-
         public: // Methods
 
-            Context (ngx_module_t& a_module, ngx_http_request_t* a_http_request,
-                     const std::map<std::string, std::string>& a_config,
-                     ngx::ws::Context::Writer* a_writer,
-                     ngx::ws::Context::TimerManager* a_timer_manager);
+            Context (ngx_module_t& a_module, ngx_http_request_t* a_http_request);
             virtual ~Context ();
 
         public: // Methods
 
-            bool SendMessage (const ngx::ws::WebsocketBufferChain* a_message);
+            Context& Setup       (const std::string& a_sec_websocket_protocol, const std::string& a_client_ip_address);
+            void     Hold        (ngx::ws::Context::Writer* a_writer, ngx::ws::Context::TimerManager* a_timer_manager);
+            bool     SendMessage (const ngx::ws::WebsocketBufferChain* a_message);
 
         }; // end of class 'Context'
 
+        /**
+         * @brief On-shot setup.
+         *
+         * @param a_sec_websocket_protocol Client protocol list ( ',' separated ).
+         * @param a_client_ip_address      Client IP address.
+         */
+        inline ngx::ws::Context& ngx::ws::Context::Setup (const std::string& a_sec_websocket_protocol, const std::string& a_client_ip_address)
+        {
+            // ... sanity check ...
+            if ( nullptr != client_ ) {
+                ngx::ws::Context::Exception("%s already called!", __FUNCTION__);
+            }
+            // ... create new client ...
+            client_ = ngx::ws::AbstractWebsocketClient::Factory(this, a_sec_websocket_protocol, a_client_ip_address);
+            if ( nullptr == client_ ) {
+                ngx::ws::Context::Exception("Factory did not return a valid client for '%s' protocol!", a_sec_websocket_protocol.c_str());
+            }
+            // ... done ...
+            return *this;
+        }
+        
+        /**
+         * @brief Seal setup transfering ownership of a writer and a timer manager.
+         *
+         * @param a_writer        Websocket messages writer.
+         * @param a_timer_manager Websocket timer manager.
+         */
+        inline void ngx::ws::Context::Hold (ngx::ws::Context::Writer* a_writer, ngx::ws::Context::TimerManager* a_timer_manager)
+        {
+            // ... sanity check ...
+            if ( nullptr != writer_ptr_ || nullptr != timer_manager_ptr_ ) {
+                ngx::ws::Context::Exception("%s already called!", __FUNCTION__);
+            }
+            writer_ptr_        = a_writer;
+            timer_manager_ptr_ = a_timer_manager;
+        }
+        
         /**
          * @return Starts a send a message request.
          *

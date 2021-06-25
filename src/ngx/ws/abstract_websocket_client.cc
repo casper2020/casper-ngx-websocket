@@ -28,8 +28,6 @@
 const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_       = "sec-websocket-protocol";
 const char* const ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_    = "remote-ip";
 
-const char* const ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_lc_            = "jrxml_base_directory";
-
 #ifdef __APPLE__
 #pragma mark - AbstractWebsocketClient: Registry
 #endif
@@ -62,16 +60,16 @@ void ngx::ws::AbstractWebsocketClient::UnregisterFactory (const char* a_protocol
 }
 
 /**
- * @brief Create a client handler for the specified protocol
+ * @brief Create a client handler for a specific protocol
  *
- * @param a_ws_context pointer to the context that received the connection
- * @param a_config
- * @param a_resources_path
+ * @param a_ws_context             pointer to the context that received the connection
+ * @param a_sec_websocket_protocol websocket protocol
+ * @param a_ip_address             client's ip address
  *
  * @return New instance of the client or NULL if the request can't not be honoured
  */
 ngx::ws::AbstractWebsocketClient* ngx::ws::AbstractWebsocketClient::Factory (ngx::ws::Context* a_ws_context,
-                                                                             const std::map<std::string, std::string>& a_config)
+                                                                             const std::string& a_sec_websocket_protocol, const std::string& a_ip_address)
 {
     //
     std::string                       token;
@@ -84,13 +82,7 @@ ngx::ws::AbstractWebsocketClient* ngx::ws::AbstractWebsocketClient::Factory (ngx
         // not ready
         return rv;
     }
-    // get websocket protocol header value
-    auto pit = a_config.find(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_);
-    if ( a_config.end() == pit ) {
-        // could not find it
-        return rv;
-    }
-    std::string protocol = pit->second;
+    std::string protocol = a_sec_websocket_protocol;
     // split list into tokens
     for ( ; ; ) {
         end = protocol.find(',', start);
@@ -110,7 +102,7 @@ ngx::ws::AbstractWebsocketClient* ngx::ws::AbstractWebsocketClient::Factory (ngx
         if ( it2 == g_registry_->end() ) {
             continue;
         }
-        rv = (*it2->second)(a_ws_context, a_config);
+        rv = (*it2->second)(a_ws_context, *it, a_ip_address);
         if ( nullptr != rv ) {
             break;
         }

@@ -40,13 +40,6 @@ extern "C" {
 #pragma mark - NGINX websocket module loc_conf_t
 #endif
 
-#include "ngx/ws/config.h"
-
-/**
- * @brief Module 'srv' configuration structure, applicable to a location scope
- */
-typedef nginx_epaper_service_conf_t ngx_http_websocket_module_main_conf_t;
-
 /**
  * @brief Module 'local' configuration structure, applicable to a location scope
  */
@@ -54,8 +47,6 @@ typedef struct {
     ngx_flag_t                             enable;                           //!< flag that enables the module
     ngx_int_t                              ping_period;                      //!< the number of seconds between pings
     ngx_int_t                              idle_timeout;                     //!< the maximum number of seconds without exchanging data messages
-    
-    nginx_epaper_casper_editor_conf_t      editor;    
 } ngx_http_websocket_module_loc_conf_t;
 
 extern ngx_module_t ngx_http_websocket_module;
@@ -1045,7 +1036,7 @@ namespace ngx {
         /**
          * @brief NGINX WebSocket context.
          */
-        class NGXContext : public ngx::ws::Context
+        class NGXContext final : public ngx::ws::Context
         {
 
         public: // data
@@ -1067,14 +1058,12 @@ namespace ngx {
 
         public: // constructor / destructor
 
-            NGXContext (ngx_module_t& a_module, ngx_http_request_t* a_http_request,
-                        const std::map<std::string, std::string>& a_config,
-                        ngx::ws::Context::Writer* a_writer,
-                        ngx::ws::NGXTimerManager* a_timer_manager_issuer)
-            : ngx::ws::Context(a_module, a_http_request,
-                               a_config,
-                               a_writer,
-                               a_timer_manager_issuer)
+            /**
+             * @brief Default constructor.
+             */
+            NGXContext () = delete;
+            NGXContext (ngx_module_t& a_module, ngx_http_request_t* a_http_request)
+            : ngx::ws::Context(a_module, a_http_request)
             {
                 rx_active_message_    = &rx_data_message_;
                 tx_active_message_    = &tx_data_message_;
@@ -1084,9 +1073,12 @@ namespace ngx {
                 timer_callback_       = 0;
             }
 
+            /**
+             * @brief Destructor.
+             */
             virtual ~NGXContext ()
             {
-                // nop
+                // ... nop ...
             }
 
         }; // end of class 'NGXContext'

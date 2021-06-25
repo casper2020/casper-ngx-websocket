@@ -28,16 +28,16 @@
 
 /**
  * @brief Default constructor.
+ *
+ * param a_module
+ * param a_http_request
  */
-ngx::ws::Context::Context (ngx_module_t& a_module, ngx_http_request_t* a_http_request,
-                           const std::map<std::string, std::string>& a_config,
-                           ngx::ws::Context::Writer* a_writer,
-                           ngx::ws::Context::TimerManager* a_timer_manager)
-    : module_(a_module), http_request_(a_http_request), config_(a_config)
+ngx::ws::Context::Context (ngx_module_t& a_module, ngx_http_request_t* a_http_request)
+    : module_(a_module), http_request_(a_http_request)
 {
-    writer_ptr_           = a_writer;
-    timer_manager_ptr_    = a_timer_manager;
-    client_               = ngx::ws::AbstractWebsocketClient::Factory(this, a_config);
+    writer_ptr_        = nullptr;
+    timer_manager_ptr_ = nullptr;
+    client_            = nullptr;
 }
 
 /**
@@ -45,5 +45,7 @@ ngx::ws::Context::Context (ngx_module_t& a_module, ngx_http_request_t* a_http_re
  */
 ngx::ws::Context::~Context ()
 {
-    delete client_;
+    if ( nullptr != client_ ) {
+        delete client_;
+    }
 }

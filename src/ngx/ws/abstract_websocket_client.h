@@ -41,7 +41,7 @@ namespace ngx
         class AbstractWebsocketClient;
 
         typedef AbstractWebsocketClient* (*ClientFactory)(Context* a_ws_context,
-							  const std::map<std::string, std::string>& a_config);
+                                                          const std::string& a_protocol, const std::string& a_client_ip_address);
         typedef std::map<std::string, ClientFactory> ClientRegistry;
 
         /**
@@ -53,8 +53,6 @@ namespace ngx
 
             static const char* const k_websocket_protocol_header_key_lc_;
             static const char* const k_websocket_protocol_remote_ip_key_lc_;
-            
-            static const char* const k_jrxml_base_directory_key_lc_;
 
         protected: // Data
 
@@ -89,16 +87,16 @@ namespace ngx
             static void UnregisterFactory (const char* a_protocol);
 
             /**
-             * @brief Create a client handler for the specified protocol
+             * @brief Create a client handler for a specific protocol
              *
-             * @param a_ws_context pointer to the context that received the connection
-             * @param a_config
-	         * @param a_resources_path
+             * @param a_ws_context             pointer to the context that received the connection
+             * @param a_sec_websocket_protocol websocket protocol
+             * @param a_ip_address             client's ip address
              *
              * @return New instance of the client or NULL if the request can't not be honoured
              */
             static AbstractWebsocketClient* Factory (Context* a_ws_context,
-						     const std::map<std::string, std::string>& a_config);
+                                                     const std::string& a_sec_websocket_protocol, const std::string& a_ip_address);
 
         public: // Methods called by the context
 

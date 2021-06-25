@@ -34,9 +34,6 @@
 #pragma mark -
 #endif
 
-static void*                ngx_http_websocket_module_create_main_conf   (ngx_conf_t* a_cf);
-static char*                ngx_http_websocket_module_init_main_conf     (ngx_conf_t* a_cf, void* a_conf);
-
 static void*                ngx_http_websocket_module_create_loc_conf    (ngx_conf_t* a_cf);
 static char*                ngx_http_websocket_module_merge_loc_conf     (ngx_conf_t* a_cf, void* a_parent, void* a_child);
 
@@ -49,9 +46,9 @@ static void                 ngx_http_websocket_module_timer_handler      (ngx_ev
 
 static void                 ngx_http_websocket_module_cleanup_handler    (void*);
 static ngx::ws::NGXContext* ngx_http_websocket_module_context_setup      (ngx_http_request_t* a_r,
-                                                                          const std::string& a_protocol, const std::string& a_remote_ip,
+                                                                          const std::string& a_sec_websocket_protocol, const std::string& a_client_ip_address,
                                                                           const ngx_http_websocket_module_loc_conf_t* a_loc_conf);
-static ngx_int_t            ngx_http_websocket_module_handshake          (ngx_http_request_t* a_r, const std::string& a_protocol, std::map<std::string, std::string>& a_in_headers);
+static ngx_int_t            ngx_http_websocket_module_handshake          (ngx_http_request_t* a_r, const std::string& a_sec_websocket_protocol, std::map<std::string, std::string>& a_in_headers);
 
 static time_t               ngx_http_websocket_module_time_utc            ();
 static bool                 ngx_http_websocket_module_base_64_encode      (const unsigned char* a_buffer, size_t a_buffer_size, std::string& o_buffer);
@@ -113,241 +110,6 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
         offsetof(ngx_http_websocket_module_loc_conf_t, idle_timeout),
         NULL
     },
-    /*
-     * local
-     */    
-    {
-        ngx_string("nginx_epaper_casper_editor_jrxml_directory"),
-        NGX_HTTP_LOC_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_loc_conf_t, editor.jrxml_directory),
-        NULL
-    },
-    /*
-     * main
-     */
-    /* service */
-    {
-        ngx_string("nginx_epaper_service_id"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, service_id),
-        NULL
-    },
-    /* redis */
-    {
-        ngx_string("nginx_epaper_redis_ip_address"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, redis.ip_address),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_redis_port_number"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, redis.port_number),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_redis_database"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, redis.database),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_redis_max_conn_per_worker"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, redis.max_conn_per_worker),
-        NULL
-    },
-    /* beanstalkd */
-    {
-        ngx_string("nginx_epaper_beanstalkd_host"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, beanstalkd.host),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_beanstalkd_port"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, beanstalkd.port),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_beanstalkd_timeout"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, beanstalkd.timeout),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_beanstalkd_action_tubes"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, beanstalkd.tubes.action),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_beanstalkd_sessionless_tubes"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, beanstalkd.tubes.sessionless),
-        NULL
-    },
-    /* postgreql */
-    {
-        ngx_string("nginx_epaper_postgresql_connection_string"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, postgresql.conn_str),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_postgresql_statement_timeout"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, postgresql.statement_timeout),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_postgresql_max_conn_per_worker"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, postgresql.max_conn_per_worker),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_postgresql_min_queries_per_conn"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, postgresql.min_queries_per_conn),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_postgresql_max_queries_per_conn"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, postgresql.max_queries_per_conn),
-        NULL
-    },
-    /* curl */
-    {
-        ngx_string("nginx_epaper_curl_max_conn_per_worker"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, curl.max_conn_per_worker),
-        NULL
-    },
-    /* gatekeeper */
-    {
-        ngx_string("nginx_epaper_gatekeeper_config_file_uri"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, gatekeeper.config_file_uri),
-        NULL
-    },
-    /* jrxml */
-    {
-        ngx_string("nginx_epaper_jrxml_directory"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, epaper.jrxml.directory),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_jrxml_js_cache_validity"),
-        NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, epaper.jrxml.js_cache_validity),
-        NULL
-    },
-    /* data source */
-    {
-        ngx_string("nginx_epaper_data_source_overridable_sys_vars"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, epaper.data_source.overridable_sys_vars),
-        NULL
-    },
-    /* session */
-    {
-        ngx_string("nginx_epaper_casper_session_fields"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, epaper.session.fields),
-        NULL
-    },
-    /* jsonapi */
-    {
-        ngx_string("nginx_epaper_jsonapi_url"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, jsonapi.url),
-        NULL
-    },
-    /* http */
-    {
-        ngx_string("nginx_epaper_http_acceptable_base_urls"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, http),
-        NULL
-    },
-    /* epaper */
-    {
-        ngx_string("nginx_epaper_casper_session_ttl_extension"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_num_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, epaper.session.ttl_extension),
-        NULL
-    },
-    {
-        ngx_string("nginx_epaper_casper_session_return_fields"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_MAIN_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, epaper.session.return_fields),
-        NULL
-    },
-    /* legacy debug trace ( OSAL ) */
-    {
-        ngx_string("nginx_epaper_legacy_logger_enabled_debug_tokens"),
-        NGX_HTTP_MAIN_CONF | NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_HTTP_LOC_CONF_OFFSET,
-        offsetof(ngx_http_websocket_module_main_conf_t, legacy_logger_enabled_debug_tokens),
-        NULL
-    },
     /* closure */
     ngx_null_command
 };
@@ -358,8 +120,8 @@ static ngx_command_t ngx_http_websocket_module_commands[] = {
 static ngx_http_module_t ngx_http_websocket_module_ctx = {
     NULL,                                       /* preconfiguration              */
     ngx_http_websocket_module_filter_init,      /* postconfiguration             */
-    ngx_http_websocket_module_create_main_conf, /* create main configuration     */
-    ngx_http_websocket_module_init_main_conf,   /* init main configuration       */
+    NULL,                                       /* create main configuration     */
+    NULL,                                       /* init main configuration       */
     NULL,                                       /* create server configuration   */
     NULL,                                       /* merge server configuration    */
     ngx_http_websocket_module_create_loc_conf,  /* create location configuration */
@@ -389,117 +151,6 @@ ngx_module_t ngx_http_websocket_module = {
 #endif
 
 /**
- * @brief Allocate module 'main' config.
- *
- * @param a_cf
- */
-static void* ngx_http_websocket_module_create_main_conf (ngx_conf_t* a_cf)
-{
-    ngx_http_websocket_module_main_conf_t* conf = (ngx_http_websocket_module_main_conf_t*) ngx_pcalloc(a_cf->pool, sizeof(ngx_http_websocket_module_main_conf_t));
-    if ( NULL == conf ) {
-        return NGX_CONF_ERROR;
-    }
-    /* service */
-    conf->service_id                         = ngx_null_string;
-    /* redis */
-    conf->redis.ip_address                   = ngx_null_string;
-    conf->redis.port_number                  = NGX_CONF_UNSET;
-    conf->redis.database                     = NGX_CONF_UNSET;
-    conf->redis.max_conn_per_worker          = NGX_CONF_UNSET;
-    /* beanstalkd */
-    conf->beanstalkd.host                    = ngx_null_string;
-    conf->beanstalkd.port                    = NGX_CONF_UNSET;
-    conf->beanstalkd.timeout                 = NGX_CONF_UNSET;
-    conf->beanstalkd.tubes.action            = ngx_null_string;
-    conf->beanstalkd.tubes.sessionless       = ngx_null_string;
-    /* postgresql */
-    conf->postgresql.conn_str                = ngx_null_string;
-    conf->postgresql.statement_timeout       = NGX_CONF_UNSET;
-    conf->postgresql.max_conn_per_worker     = NGX_CONF_UNSET;
-    conf->postgresql.min_queries_per_conn    = NGX_CONF_UNSET;
-    conf->postgresql.max_queries_per_conn    = NGX_CONF_UNSET;
-    /* curl */
-    conf->curl.max_conn_per_worker           = NGX_CONF_UNSET;
-    /* gatekeeper */
-    conf->gatekeeper.config_file_uri         = ngx_null_string;
-    /* jsonapi */
-    conf->jsonapi.url                        = ngx_null_string;
-    /* http */
-    conf->http.acceptable                    = ngx_null_string;
-    /* epaper.jrxml */
-    conf->epaper.jrxml.directory                  = ngx_null_string;
-    conf->epaper.jrxml.js_cache_validity          = NGX_CONF_UNSET;
-    /* epaper.data_source */
-    conf->epaper.data_source.overridable_sys_vars = ngx_null_string;
-    /* epaper.session */
-    conf->epaper.session.fields                   = ngx_null_string;
-    conf->epaper.session.ttl_extension            = NGX_CONF_UNSET;
-    conf->epaper.session.return_fields            = ngx_null_string;
-    /* legacy debug trace ( OSAL ) */
-    conf->legacy_logger_enabled_debug_tokens = ngx_null_string;
-    // ... done ...
-    return conf;
-}
-
-/**
- * @brief Initialize module 'main' config.
- *
- * @param a_cf
- * @param a_conf
- */
-#define cws_conf_init_str_value(conf, default) \
-    if ( NULL == conf.data ) { \
-        conf.len  = strlen(default); \
-        conf.data = (u_char*)ngx_palloc(a_cf->pool, conf.len); \
-        ngx_memcpy(conf.data, default, conf.len); \
-    }
-
-static char* ngx_http_websocket_module_init_main_conf (ngx_conf_t* a_cf, void* a_conf)
-{
-    ngx_http_websocket_module_main_conf_t* conf = (ngx_http_websocket_module_main_conf_t*)a_conf;
-    /* service */
-    cws_conf_init_str_value (conf->service_id                        ,          "" );
-    /* redis */
-    cws_conf_init_str_value (conf->redis.ip_address                  ,          "" );
-    ngx_conf_init_value     (conf->redis.port_number                 ,        6379 );
-    ngx_conf_init_value     (conf->redis.database                    ,          -1 );
-    ngx_conf_init_value     (conf->redis.max_conn_per_worker         ,           4 );
-    /* beanstalkd */
-    cws_conf_init_str_value (conf->beanstalkd.host                   , "127.0.0.1" );
-    ngx_conf_init_uint_value(conf->beanstalkd.port                   ,       11300 );
-    ngx_conf_init_uint_value(conf->beanstalkd.timeout                ,           0 );
-    cws_conf_init_str_value (conf->beanstalkd.tubes.action           ,          "" );
-    cws_conf_init_str_value (conf->beanstalkd.tubes.sessionless      ,          "" );
-    /* postgresql */
-    cws_conf_init_str_value (conf->postgresql.conn_str               ,          "" );
-    ngx_conf_init_value     (conf->postgresql.statement_timeout      ,         300 ); // in seconds
-    ngx_conf_init_value     (conf->postgresql.max_conn_per_worker    ,           2 );
-    ngx_conf_init_value     (conf->postgresql.min_queries_per_conn   ,          -1 );
-    ngx_conf_init_value     (conf->postgresql.max_queries_per_conn   ,          -1 );
-    /* curl */
-    ngx_conf_init_value     (conf->curl.max_conn_per_worker          ,          10 );
-    /* gatekeeper */
-    cws_conf_init_str_value (conf->gatekeeper.config_file_uri        ,          "" );
-    /* jsonapi */
-    cws_conf_init_str_value (conf->jsonapi.url                       ,        "" );
-    /* http */
-    cws_conf_init_str_value (conf->http.acceptable                   ,      "[]" );
-    /* jrxml */
-    cws_conf_init_str_value (conf->epaper.jrxml.directory                 ,         "" );
-    ngx_conf_init_uint_value(conf->epaper.jrxml.js_cache_validity         ,        86400); // 1 day
-    /* data source */
-    cws_conf_init_str_value (conf->epaper.data_source.overridable_sys_vars,        "[]" );
-    /* session */
-    cws_conf_init_str_value (conf->epaper.session.fields             ,        "[\"user_id\",\"entity_id\",\"role_mask\",\"module_mask\",\"user_email\"]" );
-    ngx_conf_init_uint_value(conf->epaper.session.ttl_extension      ,        3600 );
-    cws_conf_init_str_value (conf->epaper.session.return_fields      ,        "[]" );
-    /* legacy debug trace ( OSAL ) */
-    cws_conf_init_str_value (conf->legacy_logger_enabled_debug_tokens,        "[]" );
-    // ... done ...
-    return NGX_CONF_OK;
-}
-
-/**
  * @brief Alocate the module configuration structure
  */
 static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
@@ -511,11 +162,9 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
         return NGX_CONF_ERROR;
     }
     /* websocket */
-    conf->enable                    = NGX_CONF_UNSET;
-    conf->ping_period               = NGX_CONF_UNSET;
-    conf->idle_timeout              = NGX_CONF_UNSET;
-    /* editor */
-    conf->editor.jrxml_directory    = ngx_null_string;
+    conf->enable       = NGX_CONF_UNSET;
+    conf->ping_period  = NGX_CONF_UNSET;
+    conf->idle_timeout = NGX_CONF_UNSET;
     // ... done ...
     return conf;
 }
@@ -528,11 +177,9 @@ static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a
     ngx_http_websocket_module_loc_conf_t* prev = (ngx_http_websocket_module_loc_conf_t*) a_parent;
     ngx_http_websocket_module_loc_conf_t* conf = (ngx_http_websocket_module_loc_conf_t*) a_child;
     /* websocket */
-    ngx_conf_merge_value     (conf->enable                          , prev->enable                          ,          0 ); //       0 - disabled
-    ngx_conf_merge_value     (conf->ping_period                     , prev->ping_period                     ,         30 ); //      30 - 30s
-    ngx_conf_merge_value     (conf->idle_timeout                    , prev->idle_timeout                    ,    15 * 60 ); // 15 * 60 - 15m
-    /* editor */
-    ngx_conf_merge_str_value (conf->editor.jrxml_directory         , prev->editor.jrxml_directory           ,        "" );
+    ngx_conf_merge_value (conf->enable      , prev->enable      ,       0 ); //       0 - disabled
+    ngx_conf_merge_value (conf->ping_period , prev->ping_period ,      30 ); //      30 - 30s
+    ngx_conf_merge_value (conf->idle_timeout, prev->idle_timeout, 15 * 60 ); // 15 * 60 - 15m
     // ... done ...
     return (char*) NGX_CONF_OK;
 }
@@ -595,38 +242,47 @@ ngx_int_t ngx_http_websocket_module_content_handler (ngx_http_request_t* a_r)
     /*
      * This module is enabled.
      */
-    std::map<std::string, std::string>           in_headers;
-    std::map<std::string, std::string>::iterator in_headers_it;
-    std::string                                  protocol_hv;
-    std::string                                  remote_ip;
-    ngx::ws::NGXContext*                         context = NULL;
-    ngx_http_cleanup_t*                          cleanup = NULL;
-    // load received headers
-    ngx_list_part_t* list_part = &a_r->headers_in.headers.part;
-    while ( NULL != list_part ) {
-        //
-        ngx_table_elt_t* header = (ngx_table_elt_t*)list_part->elts;
-        for ( ngx_uint_t index = 0 ; list_part->nelts > index ; ++index ) {
+    std::map<std::string, std::string> in_headers;
+    std::string                        sec_websocket_protocol;
+    std::string                        client_ip_address;
+    {
+        // load received headers
+        ngx_list_part_t* list_part = &a_r->headers_in.headers.part;
+        while ( NULL != list_part ) {
             //
-            if ( 0 < header[index].key.len && 0 < header[index].value.len ) {
+            ngx_table_elt_t* header = (ngx_table_elt_t*)list_part->elts;
+            for ( ngx_uint_t index = 0 ; list_part->nelts > index ; ++index ) {
                 //
-                std::string key   = std::string(reinterpret_cast<char const*>(header[index].key.data), header[index].key.len);
-                std::string value = std::string(reinterpret_cast<char const*>(header[index].value.data), header[index].value.len);
-                //
-                std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-                in_headers[key] = value;
+                if ( 0 < header[index].key.len && 0 < header[index].value.len ) {
+                    //
+                    std::string key   = std::string(reinterpret_cast<char const*>(header[index].key.data), header[index].key.len);
+                    std::string value = std::string(reinterpret_cast<char const*>(header[index].value.data), header[index].value.len);
+                    //
+                    std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+                    in_headers[key] = value;
+                }
             }
+            // next...
+            list_part = list_part->next;
         }
-        // next...
-        list_part = list_part->next;
+        // ... grab protocol(s) ....
+        const auto protocols_it = in_headers.find(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_);
+        if ( protocols_it != in_headers.end() ) {
+            sec_websocket_protocol = protocols_it->second;
+        }
+        // ... grab client ip address ...
+        const auto ip_address_it = in_headers.find("x-remote-ip");
+        if ( ip_address_it != in_headers.end() ) {
+            client_ip_address = ip_address_it->second;
+        } else {
+            client_ip_address = std::string(reinterpret_cast<char const*>(a_r->connection->addr_text.data), a_r->connection->addr_text.len);
+        }
     }
-    in_headers_it = in_headers.find(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_);
-    protocol_hv   = in_headers_it != in_headers.end() ? in_headers_it->second : "";
     
-    in_headers_it = in_headers.find("x-remote-ip");
-    remote_ip     = in_headers_it != in_headers.end() ? in_headers_it->second : "";
+    ngx::ws::NGXContext* context = NULL;
+    ngx_http_cleanup_t*  cleanup = NULL;
     //
-    context       = ngx_http_websocket_module_context_setup(a_r, protocol_hv, remote_ip, loc_conf);
+    context = ngx_http_websocket_module_context_setup(a_r, sec_websocket_protocol, client_ip_address, loc_conf);
     if ( NULL == context ) {
         rc = NGX_ERROR;
         goto leave;
@@ -1248,16 +904,16 @@ static void ngx_http_websocket_module_cleanup_handler (void* a_data)
 /*
  * @brief Creates a C++ context for an HTTP connection.
  *
- * @param a_r         The nginx http request.
- * @param a_protocol  The client protocol list ( ',' separated ).
- * @param a_remote_ip The remote ip.
- * @param a_loc_conf  Pointer to the module local configuration.
+ * @param a_r                      The nginx http request.
+ * @param a_sec_websocket_protocol The client protocol list ( ',' separated ).
+ * @param a_client_ip_address      The client IP address.
+ * @param a_loc_conf               Pointer to the module local configuration.
  *
  * @return A new instance of a \link ngx::ws::NGXContext \link.
  */
 ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t* a_r,
-                                                              const std::string& a_protocol,
-                                                              const std::string& a_remote_ip,
+                                                              const std::string& a_sec_websocket_protocol,
+                                                              const std::string& a_client_ip_address,
                                                               const ngx_http_websocket_module_loc_conf_t* a_loc_conf)
 {
     ngx::ws::NGXWriter*               writer                 = NULL;
@@ -1271,48 +927,18 @@ ngx::ws::NGXContext* ngx_http_websocket_module_context_setup (ngx_http_request_t
     //
     try {
         // create writer
-        writer = new ngx::ws::NGXWriter(a_r);
-        if ( NULL == writer ) {
-            // we refuse to work without a writer
-            throw ngx::ws::NGXException("~Context::Setup~ - unable to create a writer!");
-        }
-        // create timer manager
-        timer_event_manager = new ngx::ws::NGXTimerManager(a_r, ngx_http_websocket_module_timer_handler);
-        if ( NULL == timer_event_manager ) {
-            // we refuse to work without a timer event issuer
-            throw ngx::ws::NGXException("~Context::Setup~ - unable to create a timer event issuer!");
-        }
-        // set config
-        std::map<std::string, std::string> config_map;
-        // add protocol
-        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_, a_protocol));
-        config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_websocket_protocol_remote_ip_key_lc_, a_remote_ip));       
-               
-
-        // ... add JRXML base dir config ...
-        if ( a_loc_conf->editor.jrxml_directory.len > 0 ) {
-            std::string jrxml_path = std::string(reinterpret_cast<char const*>(a_loc_conf->editor.jrxml_directory.data), a_loc_conf->editor.jrxml_directory.len);
-            if ( jrxml_path.c_str()[jrxml_path.length()-1] != '/' ) {
-                jrxml_path +=  "/";
-            }
-            config_map.insert(std::make_pair(ngx::ws::AbstractWebsocketClient::k_jrxml_base_directory_key_lc_, jrxml_path));
-        }
-          
-        // create context
-        context = new ngx::ws::NGXContext(ngx_http_websocket_module, a_r,
-                                          config_map,
-                                          writer, timer_event_manager);
-        if ( NULL == context ) {
-            // we refuse to work without a context
-            throw ngx::ws::NGXException("~Context::Setup~ - unable to create a context!");
-        } else if ( NULL == context->client_ ) {
-            // we refuse to work without a context
-            throw ngx::ws::NGXException("~Context::Setup~ - unable to create a context->client_");
-        }
-        context->dm_last_exchanged_ts_ = ngx_http_websocket_module_time_utc();
-        context->dm_timeout_           = a_loc_conf->idle_timeout;
+        writer              = new ngx::ws::NGXWriter(a_r);
         writer->SetWriteHandler(ngx_http_websocket_module_write_handler);
         writer->SetIdleHandler (ngx_http_websocket_module_idle_handler, a_loc_conf->ping_period);
+        // create timer manager
+        timer_event_manager = new ngx::ws::NGXTimerManager(a_r, ngx_http_websocket_module_timer_handler);
+        // create context
+        context = new ngx::ws::NGXContext(ngx_http_websocket_module, a_r);
+        // setup context
+        context->Setup(a_sec_websocket_protocol, a_client_ip_address)
+            .Hold(writer, timer_event_manager);
+        context->dm_last_exchanged_ts_ = ngx_http_websocket_module_time_utc();
+        context->dm_timeout_           = a_loc_conf->idle_timeout;
     } catch (ngx::ws::NGXException& a_exception) {
         // log
         exception_message = a_exception.what();
@@ -1353,14 +979,14 @@ exception_caught:
 /*
  * @brief Send an HTTP response for the websocket connection upgrade response.
  *
- * @param a_r          The nginx http request.
- * @param a_protocol   The client selected protocol.
- * @param a_in_headers The received HTTP headers.
+ * @param a_r                      The nginx http request.
+ * @param a_sec_websocket_protocol The client selected protocol.
+ * @param a_in_headers             The received HTTP headers.
  *
  * @return An nginx status code.
  *
  */
-ngx_int_t ngx_http_websocket_module_handshake (ngx_http_request_t* a_r, const std::string& a_protocol, std::map<std::string, std::string>& a_in_headers)
+ngx_int_t ngx_http_websocket_module_handshake (ngx_http_request_t* a_r, const std::string& a_sec_websocket_protocol, std::map<std::string, std::string>& a_in_headers)
 {
     //
     static const char                   k_welcome_message [] = "{\"action\":\"ping\"}";
@@ -1377,18 +1003,18 @@ ngx_int_t ngx_http_websocket_module_handshake (ngx_http_request_t* a_r, const st
     /*
      * validate params
      */
-    if ( 0 == a_protocol.length() ) {
+    if ( 0 == a_sec_websocket_protocol.length() ) {
         // log
         ngx_http_websocket_module_log_msg(a_r, NGX_LOG_ERR, "[ngx_ws_module, 0x%p, HF] : leaving, %s='%s' is invalid!",
-                                          a_r, ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_, a_protocol.c_str());
-        // a_protocol needs to be set
+                                          a_r, ngx::ws::AbstractWebsocketClient::k_websocket_protocol_header_key_lc_, a_sec_websocket_protocol.c_str());
+        // a_sec_websocket_protocol needs to be set
         return NGX_ERROR;
     }
     /*
      * setup handshake
      */
     {
-        ngx::ws::NGXServerHandshake handshake(a_protocol.c_str(), ngx_http_websocket_module_sha1, ngx_http_websocket_module_base_64_encode);
+        ngx::ws::NGXServerHandshake handshake(a_sec_websocket_protocol.c_str(), ngx_http_websocket_module_sha1, ngx_http_websocket_module_base_64_encode);
         if ( true == handshake.Handshake(a_in_headers, out_headers) ) {
             handshake_status_code = NGX_HTTP_SWITCHING_PROTOCOLS;
         } else {
