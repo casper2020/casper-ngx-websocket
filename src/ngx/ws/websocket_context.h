@@ -312,6 +312,14 @@ namespace ngx
             if ( nullptr == client_ ) {
                 ngx::ws::Context::Exception("Factory did not return a valid client for '%s' protocol!", a_sec_websocket_protocol.c_str());
             }
+            // ... setup ...
+            try {
+                client_->Setup();
+            } catch (const ngx::ws::Context::Exception& a_exception) {
+                delete client_;
+                client_ = nullptr;
+                throw a_exception;
+            }
             // ... done ...
             return *this;
         }

@@ -101,6 +101,11 @@ namespace ngx
         public: // Methods called by the context
 
             /**
+             * @brief Called by the context to setup client.
+             */
+            virtual void Setup () = 0;
+            
+            /**
              * @brief Called by the context to retrieve the protocol implemented by the client
              */
             virtual const char* Protocol () = 0;
