@@ -33,14 +33,7 @@ extern "C" {
 #include <string>
 #include <map>
 #include <sstream>
-
-#if !defined(MIN)
-#define MIN(A,B)	((A) < (B) ? (A) : (B))		//!< This macro can be used to retrieve the minimum of two expressions
-#endif
-
-#if !defined(MAX)
-#define MAX(A,B)	((A) > (B) ? (A) : (B))		//!< This macro can be used to retrieve the maximum of two expressions
-#endif
+#include <algorithm> // std::max, std::min
 
 #ifndef NGX_WS_UNUSED_PARAM
 #define NGX_WS_UNUSED_PARAM(x) (void)x			//!< This macro can be used to remove the warning about unused function/method parameters
@@ -667,7 +660,7 @@ namespace ngx
                 //
                 if ( min_required_bytes > current_frame_->header_buffer_.fill_count_ ) {
                     // ...collect bytes...
-                    size_t max_bytes_to_read = MAX(MIN(remaining_bytes, 2), 0);
+                    size_t max_bytes_to_read = static_cast<size_t>(std::max<ssize_t>(std::min<ssize_t>(remaining_bytes, 2), 0));
                     for ( size_t i = 0; i < max_bytes_to_read ; ++ i ) {
                         current_frame_->header_buffer_.data_[current_frame_->header_buffer_.fill_count_++] = a_data[i];
                         o_decoded_len++;
@@ -715,7 +708,7 @@ namespace ngx
                     if ( min_required_bytes > current_frame_->header_buffer_.fill_count_ ) {
                         // ...collect bytes...
                         size_t start_byte        = rx_required_bytes;
-                        size_t max_bytes_to_read = MAX(MIN(remaining_bytes, 2), 0);
+                        size_t max_bytes_to_read = static_cast<size_t>(std::max<ssize_t>(std::min<ssize_t>(remaining_bytes, 2), 0));
                         for ( size_t i = 0; i < max_bytes_to_read ; ++ i ) {
                             current_frame_->header_buffer_.data_[current_frame_->header_buffer_.fill_count_++] = a_data[start_byte + i];
                             o_decoded_len++;
@@ -735,7 +728,7 @@ namespace ngx
                     if ( min_required_bytes > current_frame_->header_buffer_.fill_count_ ) {
                         // ...collect bytes...
                         size_t start_byte        = rx_required_bytes;
-                        size_t max_bytes_to_read = MAX(MIN(remaining_bytes, 8), 0);
+                        size_t max_bytes_to_read = static_cast<size_t>(std::max<ssize_t>(std::min<ssize_t>(remaining_bytes, 8), 0));
                         for ( size_t i = 0; i < max_bytes_to_read ; ++ i ) {
                             current_frame_->header_buffer_.data_[current_frame_->header_buffer_.fill_count_++] = a_data[start_byte + i];
                             o_decoded_len++;
@@ -762,7 +755,7 @@ namespace ngx
                     if ( min_required_bytes > current_frame_->header_buffer_.fill_count_ ) {
                         // ...collect bytes...
                         size_t start_byte        = rx_required_bytes;
-                        size_t max_bytes_to_read = MAX(MIN(remaining_bytes, 4), 0);
+                        size_t max_bytes_to_read = static_cast<size_t>(std::max<ssize_t>(std::min<ssize_t>(remaining_bytes, 4), 0));
                         for ( size_t i = 0; i < max_bytes_to_read ; ++ i ) {
                             current_frame_->header_buffer_.data_[current_frame_->header_buffer_.fill_count_++] = a_data[start_byte + i];
                             o_decoded_len++;
@@ -837,7 +830,7 @@ namespace ngx
                     available_payload_len = 0;
                 } else {
                     payload_data_ptr      = a_data + ( a_data_len - remaining_bytes ) ;
-                    available_payload_len = MIN((uint64_t)remaining_bytes, real_payload_length);
+                    available_payload_len = std::min<size_t>((uint64_t)remaining_bytes, real_payload_length);
                 }
                 //
                 if ( NULL == payload_data_ptr || 0 == remaining_bytes ) {
@@ -849,7 +842,7 @@ namespace ngx
             } else {
                 // no, it's the remaining payload
                 payload_data_ptr      = a_data;
-                available_payload_len = MIN((ssize_t)bytes_missing, a_data_len);
+                available_payload_len = static_cast<uint64_t>(std::min<ssize_t>((ssize_t)bytes_missing, a_data_len));
                 o_decoded_len         = 0;
             }
             //

@@ -109,9 +109,9 @@ bool ngx::ws::WebsocketTestClient::UseChains ()
  *
  * @note  The message memory is released by the context after this method returns
  */
-void ngx::ws::WebsocketTestClient::OnBinaryMessage (const ngx::ws::Context* a_ws_context, const void* a_data, size_t a_size)
+void ngx::ws::WebsocketTestClient::OnBinaryMessage (const ngx::ws::Context* /* a_ws_context */, const void* /* a_data */, size_t /* a_size */)
 {
-    (void)a_ws_context;
+    /* empty */
 }
 
 /**
@@ -123,9 +123,9 @@ void ngx::ws::WebsocketTestClient::OnBinaryMessage (const ngx::ws::Context* a_ws
  *
  * @note  The message memory is released by the context after this method returns
  */
-void ngx::ws::WebsocketTestClient::OnTextMessage (const ngx::ws::Context* a_ws_context, const char* a_data, size_t a_size)
+void ngx::ws::WebsocketTestClient::OnTextMessage (const ngx::ws::Context* /* a_ws_context */, const char* /* a_data */, size_t /* a_size */)
 {
-    (void)a_ws_context;
+    /* empty */
 }
 
 /**
@@ -136,9 +136,9 @@ void ngx::ws::WebsocketTestClient::OnTextMessage (const ngx::ws::Context* a_ws_c
  *
  * @note  The message memory is released by the context after this method returns
  */
-void ngx::ws::WebsocketTestClient::OnChainedMessage (const ngx::ws::Context* a_ws_context, const ngx::ws::WebsocketBufferChain* a_chain)
+void ngx::ws::WebsocketTestClient::OnChainedMessage (const ngx::ws::Context* /* a_ws_context */, const ngx::ws::WebsocketBufferChain* /* a_chain */)
 {
-    (void)a_ws_context;
+    /* empty */
 }
 
 /**
@@ -149,9 +149,8 @@ void ngx::ws::WebsocketTestClient::OnChainedMessage (const ngx::ws::Context* a_w
  * @return @li pointer to next message to transmit
  *         @li NULL there are no more messages to send, context should idle the transmitter
  */
-const ngx::ws::WebsocketBufferChain* ngx::ws::WebsocketTestClient::OnMessageSent (const ngx::ws::Context* a_ws_context)
+const ngx::ws::WebsocketBufferChain* ngx::ws::WebsocketTestClient::OnMessageSent (const ngx::ws::Context* /* a_ws_context */)
 {
-    (void)a_ws_context;
     if ( queue_.size() == 0 ) {
         return NULL;
     }
@@ -171,31 +170,30 @@ const ngx::ws::WebsocketBufferChain* ngx::ws::WebsocketTestClient::OnMessageSent
  *
  * @param a_ws_context pointer to the context that was terminated
  */
-void ngx::ws::WebsocketTestClient::OnConnectionClosed (const ngx::ws::Context* a_ws_context)
+void ngx::ws::WebsocketTestClient::OnConnectionClosed (const ngx::ws::Context* /* a_ws_context */)
 {
-    (void)a_ws_context;
+    /* empty */
 }
 
 /**
  * @brief This method will be called when an exception was caught.
  *
- * @param a_error
+ * @param a_ws_context pointer to the context that caught an exception.
+ * @param a_exception
  */
-void ngx::ws::WebsocketTestClient::OnExceptionCaught (const ngx::ws::Context* a_ws_context, const std::exception& a_exception)
+void ngx::ws::WebsocketTestClient::OnExceptionCaught (const ngx::ws::Context* /* a_ws_context */, const std::exception& /* a_exception */)
 {
-    (void)a_ws_context;
-    (void)a_exception;
+    /* empty */
 }
 
 /**
  * @brief This method will be called when an error was caught.
  *
- * @param a_error
+ * @param a_ws_context pointer to the context that caught an error.
  */
-void ngx::ws::WebsocketTestClient::OnErrorCaught (const ::ngx::ws::Context* a_ws_context, const std::runtime_error& a_error)
+void ngx::ws::WebsocketTestClient::OnErrorCaught (const ::ngx::ws::Context* /* a_ws_context */, const std::runtime_error& /* a_error */)
 {
-    (void)a_ws_context;
-    (void)a_error;
+    /* empty */
 }
 
 #ifdef __APPLE__

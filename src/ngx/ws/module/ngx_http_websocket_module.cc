@@ -172,7 +172,7 @@ static void* ngx_http_websocket_module_create_loc_conf (ngx_conf_t* a_cf)
 /**
  * @brief The merge 'loc' conf callback...
  */
-static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* a_cf, void* a_parent, void* a_child)
+static char* ngx_http_websocket_module_merge_loc_conf (ngx_conf_t* /* a_cf */, void* a_parent, void* a_child)
 {
     ngx_http_websocket_module_loc_conf_t* prev = (ngx_http_websocket_module_loc_conf_t*) a_parent;
     ngx_http_websocket_module_loc_conf_t* conf = (ngx_http_websocket_module_loc_conf_t*) a_child;
@@ -426,7 +426,9 @@ static void ngx_http_websocket_module_read_handler (ngx_http_request_t* a_r)
                 goto terminate_connection;
             }
         }
-        total_read_bytes += read_bytes;
+        if ( read_bytes > 0 ) {
+            total_read_bytes += static_cast<size_t>(read_bytes);
+        }
         // log
         ngx_http_websocket_module_log_msg(a_r, NGX_LOG_DEBUG, "[ngx_ws_module, 0x%p, RH] : %s, %z byte(s)",
                                           a_r, "read", read_bytes);
@@ -626,11 +628,11 @@ static void ngx_http_websocket_module_write_handler (ngx_http_request_t* a_r)
     // send current and all other messages requested by client
     while ( NULL != writer->next_message_ptr_ && a_r->connection->write->ready ) {
         //
-        size_t       start_tx   = a_r->connection->sent;
+        size_t       start_tx   = static_cast<size_t>(a_r->connection->sent);
         // send chain
         ngx_chain_t* rv         = ngx_writev_chain(a_r->connection, writer->next_message_ptr_->chain_ptr_, 0);
         // calculate the number of bytes sent
-        size_t       bytes_sent = a_r->connection->sent - start_tx;
+        size_t       bytes_sent = static_cast<size_t>(a_r->connection->sent) - start_tx;
         // log
         ngx_http_websocket_module_log_msg(a_r, NGX_LOG_DEBUG, "[ngx_ws_module, 0x%p, WH] : msg chunk sent - %d byte(s) [ already sent %d byte(s) of %d byte(s), remaining %d byte(s), 0x%p ]",
                                           a_r, bytes_sent,
@@ -1068,7 +1070,7 @@ ngx_int_t ngx_http_websocket_module_handshake (ngx_http_request_t* a_r, const st
      * Adjust response headers
      */
     a_r->headers_out.status            = handshake_status_code;
-    a_r->headers_out.content_length_n  = out_data.len;
+    a_r->headers_out.content_length_n  = static_cast<off_t>(out_data.len);
     a_r->headers_out.content_type.len  = sizeof(k_content_type) - 1;
     a_r->headers_out.content_type.data = (u_char *)k_content_type;
     /*
