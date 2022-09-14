@@ -747,8 +747,8 @@ void ngx_http_websocket_module_idle_handler (ngx_event_t* a_ev)
         //
         ngx::ws::NGXContext* context  = (ngx::ws::NGXContext*) ngx_http_get_module_ctx(request, ngx_http_websocket_module);
         ngx::ws::NGXWriter*  writer   = (ngx::ws::NGXWriter*)(context->writer_ptr_);
-        const ngx_msec_t     now      = ngx_http_websocket_module_time_utc();
-        const ngx_msec_t     elapsed  = context->dm_last_exchanged_ts_ > 0 ? ( now - context->dm_last_exchanged_ts_ ) : 0;
+        const time_t         now      = ngx_http_websocket_module_time_utc();
+        const time_t         elapsed  = context->dm_last_exchanged_ts_ > 0 ? ( now - context->dm_last_exchanged_ts_ ) : 0;
         // close message or ping?
         if ( context->dm_timeout_ <= elapsed ) {
             // log
@@ -1097,14 +1097,22 @@ ngx_int_t ngx_http_websocket_module_handshake (ngx_http_request_t* a_r, const st
                 return NGX_ERROR;
             }
             const char* k_v  = it->first.c_str();
-            header->key.len = snprintf((char*)header->key.data, k_l, "%s", k_v);
+            const auto  k_r = snprintf((char*)header->key.data, k_l, "%s", k_v);
+            if ( k_r < 0 ) {
+                return NGX_ERROR;
+            }
+            header->key.len = static_cast<size_t>(k_r);
             //
             header->value.data = (u_char*) ngx_pcalloc(a_r->pool,  v_l);
             if ( NULL == header->value.data ) {
                 return NGX_ERROR;
             }
             const char* v_v = it->second.c_str();
-            header->value.len = snprintf((char*)header->value.data, v_l, "%s", v_v);
+            const auto  v_r = snprintf((char*)header->value.data, v_l, "%s", v_v);
+            if ( v_r < 0 ) {
+                return NGX_ERROR;
+            }
+            header->value.len = static_cast<size_t>(v_r);
             //
             header->hash = 1;
         }

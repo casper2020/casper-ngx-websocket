@@ -787,7 +787,7 @@ namespace ngx
                 uint64_t real_payload_length;
                 if ( 0x7E /* = 126 decimal */ == payload_length ) {
                     // following 2 bytes interpreted as a 16-bit unsigned integer are the payload length
-                    real_payload_length = current_frame_->header_buffer_.data_[2] << 8 | current_frame_->header_buffer_.data_[3];
+                    real_payload_length = static_cast<uint64_t>(current_frame_->header_buffer_.data_[2] << 8 | current_frame_->header_buffer_.data_[3]);
                 } else if ( 0x7F /* = 127 decimal */ == payload_length ) {
                     // following 8 bytes interpreted as a 64-bit unsigned integer are the payload length
                     real_payload_length = (uint64_t)current_frame_->header_buffer_.data_[2] << 56 |
@@ -1052,7 +1052,7 @@ namespace ngx
         inline ssize_t IncomingMessage::Decode (IncomingMessage& o_message, const unsigned char* a_data, ssize_t a_length, bool& o_complete, bool& o_fragmented, size_t& o_decoded_bytes)
         {
             if ( true == o_message.Decode(a_data, a_length, o_decoded_bytes, o_complete, o_fragmented) ) {
-                return a_length - o_decoded_bytes;
+                return a_length - static_cast<ssize_t>(o_decoded_bytes);
             }
             return -1;
         }
@@ -1243,7 +1243,7 @@ namespace ngx
             //
             // * frame MAY include "Application data"
             //
-            return o_message.Encode(static_cast<uint8_t>(ngx::ws::BaseFrame::Opcodes::EPing), a_data, a_length, a_masking_key);
+            return o_message.Encode(static_cast<uint8_t>(ngx::ws::BaseFrame::Opcodes::EPing), a_data, static_cast<size_t>(a_length), a_masking_key);
         }
 
         /**
