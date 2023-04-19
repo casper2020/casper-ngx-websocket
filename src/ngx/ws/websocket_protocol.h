@@ -44,7 +44,11 @@ extern "C" {
 #endif
 
 #ifndef NGX_WS_TODO
-#define NGX_WS_TODO(x) NGX_WS_DO_PRAGMA(message ("WARNING: TODO - " #x))
+    #ifdef NGX_DEBUG
+        #define NGX_WS_TODO(x) NGX_WS_DO_PRAGMA(message ("WARNING: TODO - " #x))
+    #else
+        #define NGX_WS_TODO(x) 
+    #endif
 #endif
 
 namespace ngx
