@@ -305,12 +305,12 @@ namespace ngx
         {
             // ... sanity check ...
             if ( nullptr != client_ ) {
-                ngx::ws::Context::Exception("%s already called!", __FUNCTION__);
+                throw ngx::ws::Context::Exception("%s already called!", __FUNCTION__);
             }
             // ... create new client ...
             client_ = ngx::ws::AbstractWebsocketClient::Factory(this, a_sec_websocket_protocol, a_client_ip_address);
             if ( nullptr == client_ ) {
-                ngx::ws::Context::Exception("Factory did not return a valid client for '%s' protocol!", a_sec_websocket_protocol.c_str());
+                throw ngx::ws::Context::Exception("Factory did not return a valid client for '%s' protocol!", a_sec_websocket_protocol.c_str());
             }
             // ... setup ...
             try {
@@ -334,7 +334,7 @@ namespace ngx
         {
             // ... sanity check ...
             if ( nullptr != writer_ptr_ || nullptr != timer_manager_ptr_ ) {
-                ngx::ws::Context::Exception("%s already called!", __FUNCTION__);
+                throw ngx::ws::Context::Exception("%s already called!", __FUNCTION__);
             }
             writer_ptr_        = a_writer;
             timer_manager_ptr_ = a_timer_manager;
