@@ -1176,7 +1176,7 @@ static int ngx_http_websocket_module_base_64_encoder (char* o_encoded, const cha
     }
 
     *p++ = '\0';
-    return p - o_encoded;
+    return static_cast<int>(p - o_encoded);
 }
 
 /**
@@ -1219,7 +1219,7 @@ bool ngx_http_websocket_module_base_64_encode (const unsigned char* a_buffer, si
     //
     b64_buffer[0] = '\0';
     //
-    const int rv = ngx_http_websocket_module_base_64_encoder(b64_buffer, reinterpret_cast<char const*>(a_buffer), a_buffer_size);
+    const int rv = ngx_http_websocket_module_base_64_encoder(b64_buffer, reinterpret_cast<char const*>(a_buffer), static_cast<int>(a_buffer_size));
     if ( b64_buffer_len == static_cast<size_t>(rv) ) {
         o_buffer = b64_buffer;
     } else {
