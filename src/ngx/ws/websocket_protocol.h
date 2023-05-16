@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 #ifndef NGX_WS_TODO
-    #ifdef NGX_DEBUG
+    #if defined(NGX_DEBUG) && ! defined(NDEBUG)
         #define NGX_WS_TODO(x) NGX_WS_DO_PRAGMA(message ("WARNING: TODO - " #x))
     #else
         #define NGX_WS_TODO(x) 
